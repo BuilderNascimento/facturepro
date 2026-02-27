@@ -1,52 +1,73 @@
 'use client';
 
-import { Bell, HelpCircle, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { Bell, HelpCircle, ChevronDown, Menu } from 'lucide-react';
+import Link from 'next/link';
 
 interface TopHeaderProps {
   userEmail?: string | null;
   companyName?: string | null;
+  onMenuToggle?: () => void;
 }
 
-export function TopHeader({ userEmail, companyName }: TopHeaderProps) {
+export function TopHeader({ userEmail, companyName, onMenuToggle }: TopHeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const mainLabel = companyName || userEmail?.split('@')[0] || 'Mon compte';
-  const subLabel = companyName && userEmail ? userEmail : null;
+  const displayName = companyName || (userEmail ? userEmail.split('@')[0] : 'Mon compte');
+  const displayEmail = userEmail ?? '';
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-end gap-2 h-14 px-6 bg-white border-b border-slate-200 shadow-sm">
-      <div className="h-1 absolute top-0 left-0 right-0 bg-gradient-to-r from-primary-600 via-primary-500 to-accent-magenta" />
+    <header className="relative shrink-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
+      {/* Gradient top bar */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-600 via-accent-magenta to-primary-400" />
+
+      {/* Left: hamburger (mobile) + title */}
       <div className="flex items-center gap-3">
-        <button type="button" className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="Notifications">
-          <Bell className="w-5 h-5" />
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition text-slate-600"
+          aria-label="Abrir menu"
+        >
+          <Menu className="w-5 h-5" />
         </button>
-        <button type="button" className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="Aide">
-          <HelpCircle className="w-5 h-5" />
+        <div className="hidden sm:block">
+          <p className="text-sm font-semibold text-slate-800 leading-tight">{displayName}</p>
+          {displayEmail && <p className="text-xs text-slate-500 leading-tight">{displayEmail}</p>}
+        </div>
+      </div>
+
+      {/* Right: icons + profile */}
+      <div className="flex items-center gap-1">
+        <button className="p-2 rounded-lg hover:bg-slate-100 transition text-slate-500" aria-label="Notifications">
+          <Bell className="w-4 h-4" />
         </button>
-        <div className="relative">
+        <button className="p-2 rounded-lg hover:bg-slate-100 transition text-slate-500" aria-label="Aide">
+          <HelpCircle className="w-4 h-4" />
+        </button>
+
+        <div className="relative ml-1">
           <button
-            type="button"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 pl-3 pr-2 py-2 rounded-lg hover:bg-slate-100 text-slate-700 text-left"
+            onClick={() => setDropdownOpen((p) => !p)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition"
           >
-            <div className="flex flex-col items-end min-w-0">
-              <span className="text-sm font-medium truncate max-w-[140px]">{mainLabel}</span>
-              {subLabel && <span className="text-xs text-slate-500 truncate max-w-[140px]">{subLabel}</span>}
+            <div className="w-7 h-7 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {displayName.charAt(0).toUpperCase()}
             </div>
-            <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition ${dropdownOpen ? 'rotate-180' : ''}`} />
+            <span className="hidden sm:block text-sm font-medium text-slate-700 max-w-[120px] truncate">
+              {displayName}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
           </button>
+
           {dropdownOpen && (
-            <>
-              <div className="fixed inset-0 z-10" aria-hidden onClick={() => setDropdownOpen(false)} />
-              <div className="absolute right-0 mt-1 w-48 py-1 bg-white rounded-lg border border-slate-200 shadow-lg z-20">
-                <span className="block px-4 py-2 text-xs text-slate-500 border-b border-slate-100">
-                  {userEmail || '—'}
-                </span>
-                <a href="/settings" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                  Paramètres
-                </a>
-              </div>
-            </>
+            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-50 py-1">
+              <Link
+                href="/settings"
+                onClick={() => setDropdownOpen(false)}
+                className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Paramètres
+              </Link>
+            </div>
           )}
         </div>
       </div>
