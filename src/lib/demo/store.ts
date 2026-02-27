@@ -200,7 +200,7 @@ export function storeCreateInvoice(
     id: crypto.randomUUID(),
     invoice_id: id,
   }));
-  store.invoices.push(invoice);
+  store.invoices.push({ ...invoice, clients: null });
   store.invoice_items.push(...invoiceItems);
   saveStore(store);
   return invoice;
