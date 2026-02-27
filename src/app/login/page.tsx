@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !process.env.NEXT_PUBLIC_SUPABASE_URL;
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 function LoginForm() {
   const [email, setEmail] = useState(IS_DEMO ? 'demo@facturepro.fr' : '');

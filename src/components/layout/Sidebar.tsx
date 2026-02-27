@@ -28,7 +28,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   async function handleLogout() {
-    const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     if (isDemo) {
       await fetch('/api/demo-logout', { method: 'POST' });
       window.location.href = '/';

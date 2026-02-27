@@ -19,5 +19,4 @@ export const demoSettings: CompanySettings = {
   updated_at: new Date().toISOString(),
 };
 
-export const IS_DEMO =
-  process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !process.env.NEXT_PUBLIC_SUPABASE_URL;
+export const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
