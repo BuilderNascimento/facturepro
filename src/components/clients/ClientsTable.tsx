@@ -7,7 +7,7 @@ interface Row {
   id: string;
   company_name: string;
   contact_name: string | null;
-  email: string;
+  email: string | null;
   phone: string | null;
   reference: string;
 }
@@ -53,7 +53,7 @@ export function ClientsTable({ rows }: ClientsTableProps) {
               </td>
               <td className="py-3 px-4 text-slate-600 text-sm">{row.reference}</td>
               <td className="py-3 px-4 text-slate-600">{row.phone ?? '—'}</td>
-              <td className="py-3 px-4 text-slate-600 text-sm">{row.email}</td>
+              <td className="py-3 px-4 text-slate-600 text-sm">{row.email ?? '—'}</td>
               <td className="py-3 px-4">
                 <Link
                   href={`/clients/${row.id}/edit`}
