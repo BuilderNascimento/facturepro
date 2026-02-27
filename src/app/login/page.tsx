@@ -28,16 +28,21 @@ function LoginForm() {
       return;
     }
 
-    const { createClient } = await import('@/lib/supabase/client');
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setMessage({ type: 'error', text: error.message });
-      return;
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) {
+        setMessage({ type: 'error', text: error.message });
+        return;
+      }
+      router.push('/dashboard');
+      router.refresh();
+    } catch (e) {
+      setLoading(false);
+      setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Erro de ligação ao servidor' });
     }
-    router.push('/dashboard');
-    router.refresh();
   }
 
   return (
