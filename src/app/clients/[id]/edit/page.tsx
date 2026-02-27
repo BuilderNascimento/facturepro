@@ -1,15 +1,19 @@
-import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { ClientForm } from '@/components/clients/ClientForm';
+import { IS_DEMO, demoClients } from '@/lib/demo/data';
+import type { Client } from '@/lib/types/database';
 
-export default async function EditClientPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+async function getClient(id: string): Promise<Client | null> {
+  if (IS_DEMO) return demoClients.find((c) => c.id === id) ?? null;
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
-  const { data: client } = await supabase.from('clients').select('*').eq('id', id).single();
+  const { data } = await supabase.from('clients').select('*').eq('id', id).single();
+  return (data as Client | null) ?? null;
+}
+
+export default async function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const client = await getClient(id);
   if (!client) notFound();
   return (
     <div className="space-y-6">

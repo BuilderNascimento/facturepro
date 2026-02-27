@@ -1,15 +1,19 @@
-import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { ServiceForm } from '@/components/services/ServiceForm';
+import { IS_DEMO, demoServices } from '@/lib/demo/data';
+import type { Service } from '@/lib/types/database';
 
-export default async function EditServicePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+async function getService(id: string): Promise<Service | null> {
+  if (IS_DEMO) return demoServices.find((s) => s.id === id) ?? null;
+  const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
-  const { data: service } = await supabase.from('services').select('*').eq('id', id).single();
+  const { data } = await supabase.from('services').select('*').eq('id', id).single();
+  return (data as Service | null) ?? null;
+}
+
+export default async function EditServicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const service = await getService(id);
   if (!service) notFound();
   return (
     <div className="space-y-6">
