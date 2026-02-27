@@ -11,11 +11,13 @@ export interface CompanySettings {
   company_name: string;
   legal_status: string | null;
   siret: string | null;
+  ape_naf: string | null;
   address: string | null;
   email: string | null;
   phone: string | null;
   iban: string | null;
   bic: string | null;
+  bank_name: string | null;
   vat_number: string | null;
   default_payment_terms: number;
   late_penalty_rate: number;
