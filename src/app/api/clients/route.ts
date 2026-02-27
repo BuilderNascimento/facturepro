@@ -29,7 +29,16 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-  const { data, error } = await supabase.from('clients').insert(parsed.data).select('id').single();
+  const { data, error } = await supabase.from('clients').insert({
+    company_name: parsed.data.company_name,
+    contact_name: parsed.data.contact_name ?? null,
+    address: parsed.data.address ?? null,
+    email: parsed.data.email || null,
+    phone: parsed.data.phone ?? null,
+    siret: parsed.data.siret ?? null,
+    vat_number: parsed.data.vat_number ?? null,
+    notes: parsed.data.notes ?? null,
+  }).select('id').single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
