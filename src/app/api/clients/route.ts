@@ -39,6 +39,6 @@ export async function POST(request: Request) {
     vat_number: parsed.data.vat_number ?? null,
     notes: parsed.data.notes ?? null,
   }).select('id').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: error.message || error.details || error.code || 'Erro Supabase' }, { status: 500 });
   return NextResponse.json(data);
 }
