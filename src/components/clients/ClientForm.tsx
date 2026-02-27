@@ -33,7 +33,7 @@ export function ClientForm({ client }: ClientFormProps) {
     };
     const parsed = clientSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
+      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
       setLoading(false);
       return;
     }
@@ -64,7 +64,7 @@ export function ClientForm({ client }: ClientFormProps) {
           <input name="company_name" defaultValue={client?.company_name ?? ''} required className={field} placeholder="Ex: Dupont Jean" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Contact (mandataire, agência…)</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Contact (mandataire, agence…)</label>
           <input name="contact_name" defaultValue={client?.contact_name ?? ''} className={field} placeholder="Nom du contact" />
         </div>
         <div>
@@ -89,7 +89,7 @@ export function ClientForm({ client }: ClientFormProps) {
         </div>
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-slate-700 mb-1">Notes internes</label>
-          <textarea name="notes" rows={2} defaultValue={client?.notes ?? ''} className={field} placeholder="Informações adicionais, observações…" />
+          <textarea name="notes" rows={2} defaultValue={client?.notes ?? ''} className={field} placeholder="Informations complémentaires, observations…" />
         </div>
       </div>
 

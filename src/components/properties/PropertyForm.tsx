@@ -32,7 +32,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
     };
     const parsed = propertySchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
+      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
       setLoading(false);
       return;
     }
@@ -62,12 +62,12 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
           <label className="block text-sm font-medium text-slate-700 mb-1">Propriétaire *</label>
           {clients.length === 0 ? (
             <p className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
-              Nenhum cliente encontrado.{' '}
-              <Link href="/clients/new" className="underline font-medium">Criar um cliente primeiro</Link>.
+              Aucun client trouvé.{' '}
+              <Link href="/clients/new" className="underline font-medium">Créer un client d'abord</Link>.
             </p>
           ) : (
             <select name="client_id" defaultValue={property?.client_id ?? ''} required className={field}>
-              <option value="">Selecionar o proprietário</option>
+              <option value="">Sélectionner le propriétaire</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.company_name}{c.contact_name ? ` — ${c.contact_name}` : ''}
@@ -78,7 +78,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nome do appartement *</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Nom de l'appartement *</label>
           <input name="name" defaultValue={property?.name ?? ''} required className={field} placeholder="Ex: Appt 3B Rue Victor Hugo" />
         </div>
         <div>
@@ -88,7 +88,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Prix limpeza normal (€) *
+            Prix nettoyage normal (€) *
           </label>
           <div className="relative">
             <input
@@ -106,7 +106,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Prix limpeza extra (€)
+            Prix nettoyage extra (€)
           </label>
           <div className="relative">
             <input
@@ -124,7 +124,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
 
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-          <textarea name="notes" rows={2} defaultValue={property?.notes ?? ''} className={field} placeholder="Observações, informações de acesso, etc." />
+          <textarea name="notes" rows={2} defaultValue={property?.notes ?? ''} className={field} placeholder="Informations d'accès, notes diverses…" />
         </div>
       </div>
 

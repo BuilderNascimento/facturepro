@@ -58,21 +58,21 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [dueDate, setDueDate] = useState(invoice?.due_date ?? format(addDays(new Date(), 30), 'yyyy-MM-dd'));
   const [status, setStatus] = useState(invoice?.status ?? 'draft');
 
-  // Limpezas normais
+  // Nettoyages normaux
   const [normalPrice, setNormalPrice] = useState(0);
   const [normalDates, setNormalDates] = useState<CleaningEntry[]>([]);
 
-  // Limpezas extra
+  // Nettoyages extra
   const [extraPrice, setExtraPrice] = useState(0);
   const [extraDates, setExtraDates] = useState<CleaningEntry[]>([]);
 
-  // Deslocamentos
+  // Déplacements
   const [displacements, setDisplacements] = useState<DisplacementEntry[]>([]);
 
-  // Horas suplementares
+  // Heures supplémentaires
   const [extraHours, setExtraHours] = useState<ExtraHourEntry[]>([]);
 
-  // Outros
+  // Autres lignes
   const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +144,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       const dateList = validNormal.map((d) => formatDateLabel(d.date)).join(', ');
       items.push({
         service_id: null,
-        description: `Limpeza normal — ${dateList}`,
+        description: `Nettoyage normal — ${dateList}`,
         quantity: validNormal.length,
         unit_price: normalPrice,
       });
@@ -155,7 +155,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       const dateList = validExtra.map((d) => formatDateLabel(d.date)).join(', ');
       items.push({
         service_id: null,
-        description: `Limpeza extra — ${dateList}`,
+        description: `Nettoyage extra — ${dateList}`,
         quantity: validExtra.length,
         unit_price: extraPrice,
       });
@@ -210,7 +210,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
     const items = buildItems();
     if (!items.length) {
-      setError('Adicione pelo menos uma linha (limpeza, deslocamento ou outra).');
+      setError('Ajoutez au moins une ligne (nettoyage, déplacement ou autre).');
       return;
     }
 
@@ -219,14 +219,14 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       : clientId;
 
     if (!usedClientId) {
-      setError('Selecione um cliente ou um apartamento.');
+      setError('Sélectionnez un client ou un appartement.');
       return;
     }
 
     const raw = { client_id: usedClientId, issue_date: issueDate, due_date: dueDate, status, items };
     const parsed = invoiceSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
+      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
       return;
     }
 
@@ -251,7 +251,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
 
-      {/* ── Cabeçalho ── */}
+      {/* ── En-tête ── */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
         {invoice && (
           <p className="text-slate-600 text-sm">
@@ -287,14 +287,14 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Seleção de apartamento ou cliente */}
+          {/* Sélection appartement ou client */}
           {!invoice && mode === 'property' ? (
             <div className="md:col-span-2">
               <label className={LABEL}>Appartement *</label>
               {properties.length === 0 ? (
                 <p className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
-                  Nenhum apartamento.{' '}
-                  <Link href="/properties/new" className="underline font-medium">Criar primeiro</Link>.
+                  Aucun appartement.{' '}
+                  <Link href="/properties/new" className="underline font-medium">Créer d'abord</Link>.
                 </p>
               ) : (
                 <select
@@ -303,7 +303,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                   required
                   className={INPUT}
                 >
-                  <option value="">Selecionar o apartamento</option>
+                  <option value="">Sélectionner l'appartement</option>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}{p.clients?.company_name ? ` — ${p.clients.company_name}` : ''}
@@ -313,9 +313,9 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               )}
               {selectedProp && (
                 <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600 bg-slate-50 rounded-lg p-3">
-                  <span>Proprietário: <strong>{selectedProp.clients?.company_name ?? '—'}</strong></span>
-                  <span>Normal: <strong>{Number(selectedProp.normal_price).toFixed(2)} €</strong></span>
-                  <span>Extra: <strong>{Number(selectedProp.extra_price).toFixed(2)} €</strong></span>
+                  <span>Propriétaire : <strong>{selectedProp.clients?.company_name ?? '—'}</strong></span>
+                  <span>Normal : <strong>{Number(selectedProp.normal_price).toFixed(2)} €</strong></span>
+                  <span>Extra : <strong>{Number(selectedProp.extra_price).toFixed(2)} €</strong></span>
                 </div>
               )}
             </div>
@@ -328,7 +328,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 required={mode === 'client' || !!invoice}
                 className={INPUT}
               >
-                <option value="">Selecionar um cliente</option>
+                <option value="">Sélectionner un client</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>{c.company_name}</option>
                 ))}
@@ -356,17 +356,17 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       </div>
 
-      {/* ── Limpezas normais ── */}
+      {/* ── Nettoyages normaux ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<CalendarDays className="w-4 h-4 text-blue-700" />}
-          title="Limpezas normais"
+          title="Nettoyages normaux"
           color="bg-blue-50 border-b border-blue-100"
         />
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className={LABEL}>Preço por limpeza (€)</label>
+              <label className={LABEL}>Prix par nettoyage (€)</label>
               <input
                 type="number" step="0.01" min="0"
                 value={normalPrice}
@@ -402,22 +402,22 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             ))}
           </div>
           <button type="button" onClick={addNormalDate} className="text-blue-600 hover:underline text-sm flex items-center gap-1">
-            <Plus className="w-4 h-4" /> Adicionar data de limpeza
+            <Plus className="w-4 h-4" /> Ajouter une date de nettoyage
           </button>
         </div>
       </div>
 
-      {/* ── Limpezas extra ── */}
+      {/* ── Nettoyages extra ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Sparkles className="w-4 h-4 text-emerald-700" />}
-          title="Limpezas extra"
+          title="Nettoyages extra"
           color="bg-emerald-50 border-b border-emerald-100"
         />
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className={LABEL}>Preço por limpeza extra (€)</label>
+              <label className={LABEL}>Prix par nettoyage extra (€)</label>
               <input
                 type="number" step="0.01" min="0"
                 value={extraPrice}
@@ -453,12 +453,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             ))}
           </div>
           <button type="button" onClick={addExtraDate} className="text-emerald-600 hover:underline text-sm flex items-center gap-1">
-            <Plus className="w-4 h-4" /> Adicionar data extra
+            <Plus className="w-4 h-4" /> Ajouter une date (extra)
           </button>
         </div>
       </div>
 
-      {/* ── Deslocamentos ── */}
+      {/* ── Déplacements ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Car className="w-4 h-4 text-amber-700" />}
@@ -499,7 +499,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       </div>
 
-      {/* ── Horas suplementares ── */}
+      {/* ── Heures supplémentaires ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Clock className="w-4 h-4 text-violet-700" />}
@@ -549,7 +549,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       </div>
 
-      {/* ── Outros itens ── */}
+      {/* ── Autres lignes ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Package className="w-4 h-4 text-slate-600" />}

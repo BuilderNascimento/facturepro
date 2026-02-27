@@ -50,8 +50,8 @@ export default async function PropertiesPage() {
                   <th className="px-4 py-3 font-medium text-slate-600">Appartement</th>
                   <th className="px-4 py-3 font-medium text-slate-600">Propriétaire</th>
                   <th className="px-4 py-3 font-medium text-slate-600">Adresse</th>
-                  <th className="px-4 py-3 font-medium text-slate-600 text-right">Limpeza normal</th>
-                  <th className="px-4 py-3 font-medium text-slate-600 text-right">Limpeza extra</th>
+                  <th className="px-4 py-3 font-medium text-slate-600 text-right">Nettoyage normal</th>
+                  <th className="px-4 py-3 font-medium text-slate-600 text-right">Nettoyage extra</th>
                   <th className="px-4 py-3 font-medium text-slate-600"></th>
                 </tr>
               </thead>

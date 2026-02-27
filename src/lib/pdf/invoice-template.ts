@@ -96,8 +96,8 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
 </head>
 <body>
   <div class="print-btn">
-    <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
-    <button class="btn btn-secondary" onclick="window.close()">✕ Fechar</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button>
+    <button class="btn btn-secondary" onclick="window.close()">✕ Fermer</button>
   </div>
   <div class="page">
     <div class="header">
