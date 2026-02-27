@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Download, Mail, Loader2 } from 'lucide-react';
+import { FileDown, Mail, Loader2, Printer } from 'lucide-react';
 
 interface InvoiceActionsProps {
   invoiceId: string;
   invoiceNumber: string;
-  clientEmail: string;
+  clientEmail: string | null;
   hasPdf: boolean;
   status: string;
 }
@@ -20,20 +20,11 @@ export function InvoiceActions({
   status,
 }: InvoiceActionsProps) {
   const router = useRouter();
-  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
 
-  async function handleGeneratePdf() {
-    setGeneratingPdf(true);
-    try {
-      const res = await fetch(`/api/invoices/${invoiceId}/pdf`, { method: 'POST' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Erreur');
-      if (data.url) window.open(data.url, '_blank');
-      router.refresh();
-    } finally {
-      setGeneratingPdf(false);
-    }
+  function handleOpenPdf() {
+    window.open(`/api/invoices/${invoiceId}/pdf`, '_blank');
   }
 
   async function handleSendEmail() {
@@ -42,6 +33,7 @@ export function InvoiceActions({
       return;
     }
     setSendingEmail(true);
+    setEmailMsg(null);
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/send-email`, {
         method: 'POST',
@@ -50,31 +42,35 @@ export function InvoiceActions({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Erreur');
-      alert('Email envoyé avec succès.');
+      setEmailMsg('Email envoyé ✓');
       router.refresh();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erreur d’envoi');
+      setEmailMsg(e instanceof Error ? e.message : 'Erreur');
     } finally {
       setSendingEmail(false);
     }
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {emailMsg && (
+        <span className={`text-sm ${emailMsg.includes('✓') ? 'text-green-600' : 'text-red-600'}`}>
+          {emailMsg}
+        </span>
+      )}
       <button
         type="button"
-        onClick={handleGeneratePdf}
-        disabled={generatingPdf}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm"
+        onClick={handleOpenPdf}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium transition"
       >
-        {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-        {hasPdf ? 'Télécharger PDF' : 'Générer PDF'}
+        <Printer className="w-4 h-4" />
+        Imprimer / PDF
       </button>
       <button
         type="button"
         onClick={handleSendEmail}
         disabled={sendingEmail || !clientEmail}
-        className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 text-sm"
+        className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 text-sm transition"
       >
         {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
         Envoyer par email
