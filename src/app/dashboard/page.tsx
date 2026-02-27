@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { RevenueLineChart } from '@/components/dashboard/RevenueLineChart';
 import { FileText, CheckCircle2 } from 'lucide-react';
-import { IS_DEMO, demoInvoices } from '@/lib/demo/data';
+import { IS_DEMO } from '@/lib/demo/data';
 import type { Invoice } from '@/lib/types/database';
 
 async function getInvoices(): Promise<Invoice[]> {
-  if (IS_DEMO) return demoInvoices;
+  if (IS_DEMO) {
+    const { storeGetInvoices } = await import('@/lib/demo/store');
+    return storeGetInvoices() as Invoice[];
+  }
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase

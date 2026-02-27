@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ClientsFilters } from '@/components/clients/ClientsFilters';
-import { IS_DEMO, demoClients } from '@/lib/demo/data';
+import { IS_DEMO } from '@/lib/demo/data';
 import type { Client } from '@/lib/types/database';
 
 async function getClients(): Promise<Client[]> {
-  if (IS_DEMO) return demoClients;
+  if (IS_DEMO) {
+    const { storeGetClients } = await import('@/lib/demo/store');
+    return storeGetClients();
+  }
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase.from('clients').select('*').order('company_name');

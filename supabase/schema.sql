@@ -126,6 +126,20 @@ CREATE INDEX idx_invoices_status ON invoices(status);
 CREATE INDEX idx_invoices_deleted_at ON invoices(deleted_at);
 CREATE INDEX idx_invoices_issue_date ON invoices(issue_date);
 
+-- Tabela: properties (apartamentos)
+CREATE TABLE properties (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+  name TEXT NOT NULL,
+  address TEXT,
+  normal_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+  extra_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_properties_client_id ON properties(client_id);
+
 -- Tabela: invoice_items
 CREATE TABLE invoice_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

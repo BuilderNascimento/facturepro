@@ -30,10 +30,11 @@ export interface Client {
   company_name: string;
   contact_name: string | null;
   address: string | null;
-  email: string;
+  email: string | null;
   phone: string | null;
   siret: string | null;
   vat_number: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -45,6 +46,17 @@ export interface Service {
   description: string | null;
   unit_price: number;
   unit_type: ServiceUnitType;
+  created_at: string;
+}
+
+export interface Property {
+  id: string;
+  client_id: string;
+  name: string;
+  address: string | null;
+  normal_price: number;
+  extra_price: number;
+  notes: string | null;
   created_at: string;
 }
 

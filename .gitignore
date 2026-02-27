@@ -28,6 +28,9 @@ Thumbs.db
 # vercel
 .vercel
 
+# demo store (dados locais)
+.demo-store.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

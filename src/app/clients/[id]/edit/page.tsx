@@ -1,10 +1,13 @@
 import { notFound } from 'next/navigation';
 import { ClientForm } from '@/components/clients/ClientForm';
-import { IS_DEMO, demoClients } from '@/lib/demo/data';
+import { IS_DEMO } from '@/lib/demo/data';
 import type { Client } from '@/lib/types/database';
 
 async function getClient(id: string): Promise<Client | null> {
-  if (IS_DEMO) return demoClients.find((c) => c.id === id) ?? null;
+  if (IS_DEMO) {
+    const { storeGetClient } = await import('@/lib/demo/store');
+    return storeGetClient(id);
+  }
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase.from('clients').select('*').eq('id', id).single();

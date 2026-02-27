@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { IS_DEMO, demoInvoices } from '@/lib/demo/data';
+import { IS_DEMO } from '@/lib/demo/data';
 import { InvoicesTable } from '@/components/invoices/InvoicesTable';
 import { InvoicesFilters } from '@/components/invoices/InvoicesFilters';
 
@@ -11,7 +11,10 @@ const statusLabels: Record<string, string> = {
 };
 
 async function getInvoices() {
-  if (IS_DEMO) return demoInvoices;
+  if (IS_DEMO) {
+    const { storeGetInvoices } = await import('@/lib/demo/store');
+    return storeGetInvoices();
+  }
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase
@@ -28,9 +31,7 @@ export default async function InvoicesPage() {
   const rows = [...invoices]
     .sort((a, b) => new Date(b.issue_date ?? '').getTime() - new Date(a.issue_date ?? '').getTime())
     .map((inv) => {
-      const clientName = IS_DEMO
-        ? (inv as typeof demoInvoices[0]).clients?.company_name ?? '—'
-        : ((inv as Record<string, unknown>).clients as { company_name?: string } | null)?.company_name ?? '—';
+      const clientName = (inv as { clients?: { company_name?: string } | null }).clients?.company_name ?? '—';
       const due = new Date(inv.due_date);
       const now = new Date();
       const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

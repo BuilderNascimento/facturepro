@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { clientSchema, type ClientInput } from '@/lib/validations/schemas';
+import { clientSchema } from '@/lib/validations/schemas';
 import type { Client } from '@/lib/types/database';
 import Link from 'next/link';
 
@@ -15,16 +15,6 @@ export function ClientForm({ client }: ClientFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const defaultValues: ClientInput = {
-    company_name: client?.company_name ?? '',
-    contact_name: client?.contact_name ?? '',
-    address: client?.address ?? '',
-    email: client?.email ?? '',
-    phone: client?.phone ?? '',
-    siret: client?.siret ?? '',
-    vat_number: client?.vat_number ?? '',
-  };
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -35,14 +25,15 @@ export function ClientForm({ client }: ClientFormProps) {
       company_name: formData.get('company_name'),
       contact_name: formData.get('contact_name') || undefined,
       address: formData.get('address') || undefined,
-      email: formData.get('email'),
+      email: formData.get('email') || undefined,
       phone: formData.get('phone') || undefined,
       siret: formData.get('siret') || undefined,
       vat_number: formData.get('vat_number') || undefined,
+      notes: formData.get('notes') || undefined,
     };
     const parsed = clientSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
+      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
       setLoading(false);
       return;
     }
@@ -61,46 +52,52 @@ export function ClientForm({ client }: ClientFormProps) {
     router.refresh();
   }
 
+  const field = 'w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm';
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-      {error && (
-        <p className="text-red-600 text-sm">{error}</p>
-      )}
-      <div>
-        <label htmlFor="company_name" className="block text-sm font-medium text-slate-700 mb-1">Nom de l’entreprise *</label>
-        <input id="company_name" name="company_name" defaultValue={defaultValues.company_name} required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
-      </div>
-      <div>
-        <label htmlFor="contact_name" className="block text-sm font-medium text-slate-700 mb-1">Nom du contact</label>
-        <input id="contact_name" name="contact_name" defaultValue={defaultValues.contact_name} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
-      </div>
-      <div>
-        <label htmlFor="address" className="block text-sm font-medium text-slate-700 mb-1">Adresse</label>
-        <textarea id="address" name="address" rows={2} defaultValue={defaultValues.address} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
-      </div>
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-        <input id="email" name="email" type="email" defaultValue={defaultValues.email} required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
-      </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
-        <input id="phone" name="phone" defaultValue={defaultValues.phone} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
-      </div>
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-5 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="siret" className="block text-sm font-medium text-slate-700 mb-1">SIRET</label>
-          <input id="siret" name="siret" defaultValue={defaultValues.siret} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 mb-1">Nom / Prénom du propriétaire *</label>
+          <input name="company_name" defaultValue={client?.company_name ?? ''} required className={field} placeholder="Ex: Dupont Jean" />
         </div>
         <div>
-          <label htmlFor="vat_number" className="block text-sm font-medium text-slate-700 mb-1">N° TVA</label>
-          <input id="vat_number" name="vat_number" defaultValue={defaultValues.vat_number} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500" />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Contact (mandataire, agência…)</label>
+          <input name="contact_name" defaultValue={client?.contact_name ?? ''} className={field} placeholder="Nom du contact" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
+          <input name="phone" defaultValue={client?.phone ?? ''} className={field} placeholder="+33 6 00 00 00 00" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <input name="email" type="email" defaultValue={client?.email ?? ''} className={field} placeholder="email@exemple.com" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">SIRET</label>
+          <input name="siret" defaultValue={client?.siret ?? ''} className={field} placeholder="14 chiffres" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 mb-1">Adresse</label>
+          <textarea name="address" rows={2} defaultValue={client?.address ?? ''} className={field} placeholder="Rue, ville, code postal" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">N° TVA</label>
+          <input name="vat_number" defaultValue={client?.vat_number ?? ''} className={field} />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 mb-1">Notes internes</label>
+          <textarea name="notes" rows={2} defaultValue={client?.notes ?? ''} className={field} placeholder="Informações adicionais, observações…" />
         </div>
       </div>
-      <div className="flex gap-3 pt-4">
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
-          {loading ? 'Enregistrement...' : client ? 'Mettre à jour' : 'Créer'}
+
+      <div className="flex gap-3 pt-2">
+        <button type="submit" disabled={loading} className="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm font-medium">
+          {loading ? 'Enregistrement...' : client ? 'Mettre à jour' : 'Créer le client'}
         </button>
-        <Link href="/clients" className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+        <Link href="/clients" className="px-5 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
           Annuler
         </Link>
       </div>

@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 import { InvoiceActions } from '@/components/invoices/InvoiceActions';
-import { IS_DEMO, demoInvoices, demoInvoiceItems } from '@/lib/demo/data';
+import { IS_DEMO } from '@/lib/demo/data';
 
 const statusLabels: Record<string, string> = {
   draft: 'Brouillon', sent: 'Envoyée', paid: 'Payée', overdue: 'En retard',
@@ -11,10 +11,8 @@ const statusLabels: Record<string, string> = {
 
 async function getInvoice(id: string) {
   if (IS_DEMO) {
-    const inv = demoInvoices.find((i) => i.id === id);
-    if (!inv) return null;
-    const items = demoInvoiceItems.filter((i) => i.invoice_id === id);
-    return { ...inv, invoice_items: items };
+    const { storeGetInvoice } = await import('@/lib/demo/store');
+    return storeGetInvoice(id);
   }
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
@@ -33,7 +31,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const invoice = await getInvoice(id);
   if (!invoice) notFound();
 
-  const client = (invoice as typeof demoInvoices[0]).clients;
+  const client = (invoice as { clients?: { company_name?: string; address?: string | null; email?: string | null; phone?: string | null } | null }).clients;
   const items = (invoice.invoice_items ?? []) as { description: string; quantity: number; unit_price: number; total: number }[];
 
   return (
@@ -72,7 +70,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <h3 className="text-sm font-medium text-slate-500 mb-2">Client</h3>
           <p className="font-medium text-slate-800">{client?.company_name}</p>
           {client?.address && <p className="text-slate-600 text-sm">{client.address}</p>}
-          <p className="text-slate-600 text-sm">{client?.email}</p>
+          {client?.email && <p className="text-slate-600 text-sm">{client.email}</p>}
+          {client?.phone && <p className="text-slate-600 text-sm">{client.phone}</p>}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -87,10 +86,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <tbody className="divide-y divide-slate-200">
               {items.map((item, i) => (
                 <tr key={i}>
-                  <td className="py-3 px-4">{item.description}</td>
-                  <td className="py-3 px-4 text-right">{Number(item.quantity)}</td>
-                  <td className="py-3 px-4 text-right">{Number(item.unit_price).toFixed(2)} €</td>
-                  <td className="py-3 px-4 text-right font-medium">{Number(item.total).toFixed(2)} €</td>
+                  <td className="py-3 px-4 text-slate-700">{item.description}</td>
+                  <td className="py-3 px-4 text-right text-slate-600">{Number(item.quantity)}</td>
+                  <td className="py-3 px-4 text-right text-slate-600">{Number(item.unit_price).toFixed(2)} €</td>
+                  <td className="py-3 px-4 text-right font-medium text-slate-800">{Number(item.quantity * item.unit_price).toFixed(2)} €</td>
                 </tr>
               ))}
             </tbody>
@@ -109,15 +108,16 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <p className="flex justify-between font-bold text-lg text-slate-800 pt-2 border-t border-slate-300">
               <span>Total TTC</span><span>{Number(invoice.total_ttc).toFixed(2)} €</span>
             </p>
+            <p className="text-xs text-slate-500 pt-1">TVA non applicable, art. 293B du CGI</p>
           </div>
         </div>
       </div>
 
       <div className="flex gap-3">
-        <Link href={`/invoices/${id}/edit`} className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+        <Link href={`/invoices/${id}/edit`} className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
           Modifier
         </Link>
-        <Link href="/invoices" className="text-primary-600 hover:underline">
+        <Link href="/invoices" className="text-primary-600 hover:underline text-sm">
           Retour à la liste
         </Link>
       </div>

@@ -11,6 +11,7 @@ import {
   Plus,
   MessageCircle,
   CheckCircle2,
+  Building2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -18,6 +19,7 @@ const nav = [
   { href: '/dashboard', label: 'Accueil', icon: Home },
   { href: '/invoices', label: 'Documents', icon: FileText },
   { href: '/clients', label: 'Clients', icon: Users },
+  { href: '/properties', label: 'Appartements', icon: Building2 },
   { href: '/services', label: 'Articles', icon: Briefcase },
   { href: '/settings', label: 'Paramètres', icon: Settings },
 ];

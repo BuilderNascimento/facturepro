@@ -20,13 +20,14 @@ export const companySettingsSchema = z.object({
 });
 
 export const clientSchema = z.object({
-  company_name: z.string().min(1, 'Nom de l’entreprise obligatoire'),
+  company_name: z.string().min(1, 'Nom obligatoire'),
   contact_name: z.string().optional(),
   address: z.string().optional(),
-  email: z.string().email('Email invalide'),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
   phone: z.string().optional(),
   siret: z.string().optional(),
   vat_number: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export const serviceSchema = z.object({
@@ -34,6 +35,15 @@ export const serviceSchema = z.object({
   description: z.string().optional(),
   unit_price: z.coerce.number().min(0),
   unit_type: unitTypeEnum,
+});
+
+export const propertySchema = z.object({
+  client_id: z.string().min(1, 'Propriétaire obligatoire'),
+  name: z.string().min(1, 'Nom de l\'appartement obligatoire'),
+  address: z.string().optional(),
+  normal_price: z.coerce.number().min(0, 'Prix obligatoire'),
+  extra_price: z.coerce.number().min(0),
+  notes: z.string().optional(),
 });
 
 export const invoiceItemSchema = z.object({
@@ -47,9 +57,9 @@ export const invoiceItemSchema = z.object({
 );
 
 export const invoiceSchema = z.object({
-  client_id: z.string().uuid('Client obligatoire'),
-  issue_date: z.string().min(1, 'Date d’émission obligatoire'),
-  due_date: z.string().min(1, 'Date d’échéance obligatoire'),
+  client_id: z.string().min(1, 'Client obligatoire'),
+  issue_date: z.string().min(1, 'Date d\'émission obligatoire'),
+  due_date: z.string().min(1, 'Date d\'échéance obligatoire'),
   status: statusEnum.default('draft'),
   items: z.array(invoiceItemSchema).min(1, 'Au moins une ligne'),
 });
@@ -57,5 +67,6 @@ export const invoiceSchema = z.object({
 export type CompanySettingsInput = z.infer<typeof companySettingsSchema>;
 export type ClientInput = z.infer<typeof clientSchema>;
 export type ServiceInput = z.infer<typeof serviceSchema>;
+export type PropertyInput = z.infer<typeof propertySchema>;
 export type InvoiceItemInput = z.infer<typeof invoiceItemSchema>;
 export type InvoiceInput = z.infer<typeof invoiceSchema>;

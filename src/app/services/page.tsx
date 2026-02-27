@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Plus, Pencil } from 'lucide-react';
-import { IS_DEMO, demoServices } from '@/lib/demo/data';
+import { IS_DEMO } from '@/lib/demo/data';
 import type { Service } from '@/lib/types/database';
 
 const unitLabels: Record<string, string> = {
@@ -11,7 +11,10 @@ const unitLabels: Record<string, string> = {
 };
 
 async function getServices(): Promise<Service[]> {
-  if (IS_DEMO) return demoServices;
+  if (IS_DEMO) {
+    const { storeGetServices } = await import('@/lib/demo/store');
+    return storeGetServices();
+  }
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data } = await supabase.from('services').select('*').order('name');
