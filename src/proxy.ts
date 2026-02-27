@@ -14,6 +14,7 @@ function isProtected(pathname: string) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Modo demo — usa cookie simples
   if (IS_DEMO) {
     const hasAuth = request.cookies.has('demo_auth');
     if (isProtected(pathname) && !hasAuth) {
@@ -29,34 +30,58 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Modo produção – Supabase Auth
-  let response = NextResponse.next({ request: { headers: request.headers } });
+  // Se não é rota protegida nem /login, deixa passar sem verificar Supabase
+  if (!isProtected(pathname) && pathname !== '/login') {
+    return NextResponse.next();
+  }
 
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      getAll() { return request.cookies.getAll(); },
-      setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
+  // Sem credenciais configuradas — redirecionar para login
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    if (isProtected(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  try {
+    let response = NextResponse.next({ request: { headers: request.headers } });
+
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
       },
-    },
-  });
+    });
 
-  const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && isProtected(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    if (!user && isProtected(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    if (user && pathname === '/login') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+
+    return response;
+  } catch {
+    // Se Supabase falhar, redirecionar para login em rotas protegidas
+    if (isProtected(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
-  if (user && pathname === '/login') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
-
-  return response;
 }
 
 export const config = {
