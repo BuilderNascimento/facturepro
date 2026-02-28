@@ -283,18 +283,18 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
     const items = buildItems();
     if (!items.length) {
-      setError('Ajoutez au moins une ligne (nettoyage, déplacement ou autre).');
+      setError('Adicione pelo menos um item (limpeza, deslocamento ou outro).');
       return;
     }
 
     const usedClientId = mode === 'property' ? clientId : directClientId;
     if (!usedClientId) {
-      setError('Sélectionnez un propriétaire.');
+      setError('Selecione um cliente.');
       return;
     }
 
     if (mode === 'property' && apartmentBlocks.some((b) => !b.propertyId)) {
-      setError('Sélectionnez un appartement pour chaque bloc, ou supprimez les blocs vides.');
+      setError('Selecione um local para cada bloco, ou remova os blocos vazios.');
       return;
     }
 
@@ -315,7 +315,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     const data = await res.json().catch(() => ({}));
     setLoading(false);
 
-    if (!res.ok) { setError(data.error ?? 'Erreur serveur'); return; }
+    if (!res.ok) { setError(data.error ?? 'Erro no servidor'); return; }
     if (data.id) router.push(`/invoices/${data.id}`);
     else { router.push('/invoices'); router.refresh(); }
   }
@@ -347,30 +347,30 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               onClick={() => setMode('property')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'property' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
             >
-              Par appartement(s)
+              Por local de trabalho
             </button>
             <button
               type="button"
               onClick={() => setMode('client')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'client' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
             >
-              Par client direct
+              Por cliente direto
             </button>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Sélection client */}
+          {/* Seleção cliente */}
           {mode === 'property' ? (
             <div className="md:col-span-2">
-              <label className={LABEL}>Propriétaire *</label>
+              <label className={LABEL}>Cliente / Proprietário *</label>
               <select
                 value={clientId}
                 onChange={(e) => { setClientId(e.target.value); setApartmentBlocks([{ key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]); }}
                 required={mode === 'property'}
                 className={INPUT}
               >
-                <option value="">Sélectionner le propriétaire</option>
+                <option value="">Selecionar cliente</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>{c.company_name}</option>
                 ))}
@@ -378,14 +378,14 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             </div>
           ) : (
             <div className={invoice ? '' : 'md:col-span-2'}>
-              <label className={LABEL}>Client *</label>
+              <label className={LABEL}>Cliente *</label>
               <select
                 value={directClientId}
                 onChange={(e) => setDirectClientId(e.target.value)}
                 required={mode === 'client' || !!invoice}
                 className={INPUT}
               >
-                <option value="">Sélectionner un client</option>
+                <option value="">Selecionar cliente</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>{c.company_name}</option>
                 ))}
@@ -394,20 +394,20 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           )}
 
           <div>
-            <label className={LABEL}>Statut</label>
+            <label className={LABEL}>Status</label>
             <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
-              <option value="draft">Brouillon</option>
-              <option value="sent">Envoyée</option>
-              <option value="paid">Payée</option>
-              <option value="overdue">En retard</option>
+              <option value="draft">Rascunho</option>
+              <option value="sent">Enviada</option>
+              <option value="paid">Paga</option>
+              <option value="overdue">Em atraso</option>
             </select>
           </div>
           <div>
-            <label className={LABEL}>Date d'émission *</label>
+            <label className={LABEL}>Data de emissão *</label>
             <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required className={INPUT} />
           </div>
           <div>
-            <label className={LABEL}>Date d'échéance *</label>
+            <label className={LABEL}>Data de vencimento *</label>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required className={INPUT} />
           </div>
         </div>
@@ -430,7 +430,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-primary-700" />
                     <span className="font-semibold text-sm text-primary-800">
-                      Appartement {blockIndex + 1}
+                      Local {blockIndex + 1}
                       {prop ? ` — ${prop.name}` : ''}
                     </span>
                   </div>
@@ -449,15 +449,15 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 <div className="p-4 space-y-4">
                   {/* Sélection appartement */}
                   <div>
-                    <label className={LABEL}>Appartement *</label>
+                    <label className={LABEL}>Local de trabalho *</label>
                     {!clientId ? (
                       <p className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
-                        Sélectionnez d'abord le propriétaire ci-dessus.
+                        Selecione primeiro o cliente acima.
                       </p>
                     ) : clientApartments.length === 0 ? (
                       <p className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
-                        Aucun appartement pour ce propriétaire.{' '}
-                        <Link href="/properties/new" className="underline font-medium">Créer un appartement</Link>.
+                        Nenhum local cadastrado para este cliente.{' '}
+                        <Link href="/properties/new" className="underline font-medium">Criar local</Link>.
                       </p>
                     ) : (
                       <select
@@ -465,7 +465,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                         onChange={(e) => updateBlockProperty(block.key, e.target.value)}
                         className={INPUT}
                       >
-                        <option value="">Sélectionner l'appartement</option>
+                        <option value="">Selecionar local</option>
                         {clientApartments.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
@@ -474,8 +474,8 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
                     {prop && (
                       <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600 bg-slate-50 rounded-lg p-3">
-                        <span>Nettoyage normal : <strong>{normalPrice.toFixed(2)} €</strong></span>
-                        <span>Nettoyage extra : <strong>{extraPrice.toFixed(2)} €</strong></span>
+                        <span>Valor normal : <strong>{normalPrice.toFixed(2)} €</strong></span>
+                        <span>Valor extra : <strong>{extraPrice.toFixed(2)} €</strong></span>
                       </div>
                     )}
                   </div>
@@ -484,7 +484,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                   <div className="rounded-lg border border-blue-100 overflow-hidden">
                     <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border-b border-blue-100">
                       <CalendarDays className="w-3.5 h-3.5 text-blue-700" />
-                      <span className="text-xs font-semibold text-blue-800">Nettoyages normaux</span>
+                      <span className="text-xs font-semibold text-blue-800">Limpezas normais</span>
                       {validNormal.length > 0 && prop && (
                         <span className="ml-auto text-xs text-blue-700 font-medium">
                           {validNormal.length} × {normalPrice.toFixed(2)} € = <strong>{(validNormal.length * normalPrice).toFixed(2)} €</strong>
@@ -511,7 +511,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                         </div>
                       ))}
                       <button type="button" onClick={() => addNormalDate(block.key)} className="text-blue-600 hover:underline text-xs flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Ajouter une date de nettoyage
+                        <Plus className="w-3.5 h-3.5" /> Adicionar data de limpeza
                       </button>
                     </div>
                   </div>
@@ -520,7 +520,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                   <div className="rounded-lg border border-emerald-100 overflow-hidden">
                     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border-b border-emerald-100">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                      <span className="text-xs font-semibold text-emerald-800">Nettoyages extra</span>
+                      <span className="text-xs font-semibold text-emerald-800">Limpezas extra</span>
                       {validExtra.length > 0 && prop && (
                         <span className="ml-auto text-xs text-emerald-700 font-medium">
                           {validExtra.length} × {extraPrice.toFixed(2)} € = <strong>{(validExtra.length * extraPrice).toFixed(2)} €</strong>
@@ -547,7 +547,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                         </div>
                       ))}
                       <button type="button" onClick={() => addExtraDate(block.key)} className="text-emerald-600 hover:underline text-xs flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Ajouter une date (extra)
+                        <Plus className="w-3.5 h-3.5" /> Adicionar data (extra)
                       </button>
                     </div>
                   </div>
@@ -564,7 +564,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               className="w-full py-3 border-2 border-dashed border-primary-300 rounded-xl text-primary-600 hover:border-primary-500 hover:bg-primary-50 transition text-sm font-medium flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Ajouter un autre appartement
+              Adicionar outro local
             </button>
           )}
         </>
@@ -574,7 +574,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Car className="w-4 h-4 text-amber-700" />}
-          title="Déplacements"
+          title="Deslocamentos"
           color="bg-amber-50 border-b border-amber-100"
         />
         <div className="p-4 space-y-3">
@@ -585,12 +585,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 <input
                   value={d.description}
                   onChange={(e) => updateDisplacement(i, 'description', e.target.value)}
-                  placeholder="Ex: Déplacement 25 km A/R"
+                  placeholder="Ex: Deslocamento 25 km ida/volta"
                   className={INPUT}
                 />
               </div>
               <div className="col-span-4">
-                <label className="block text-xs text-slate-500 mb-0.5">Montant (€)</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Valor (€)</label>
                 <input
                   type="number" step="0.01" min="0"
                   value={d.amount}
@@ -606,7 +606,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             </div>
           ))}
           <button type="button" onClick={addDisplacement} className="text-amber-700 hover:underline text-sm flex items-center gap-1">
-            <Plus className="w-4 h-4" /> Ajouter un déplacement
+            <Plus className="w-4 h-4" /> Adicionar deslocamento
           </button>
         </div>
       </div>
@@ -615,7 +615,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Clock className="w-4 h-4 text-violet-700" />}
-          title="Heures supplémentaires"
+          title="Horas extras"
           color="bg-violet-50 border-b border-violet-100"
         />
         <div className="p-4 space-y-3">
@@ -626,12 +626,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 <input
                   value={h.description}
                   onChange={(e) => updateExtraHour(i, 'description', e.target.value)}
-                  placeholder="Ex: Nettoyage hotte, four…"
+                  placeholder="Ex: Limpeza de coifa, forno…"
                   className={INPUT}
                 />
               </div>
               <div className="col-span-3">
-                <label className="block text-xs text-slate-500 mb-0.5">Heures (h)</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Horas (h)</label>
                 <input
                   type="number" step="0.25" min="0.25"
                   value={h.hours}
@@ -640,7 +640,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 />
               </div>
               <div className="col-span-3">
-                <label className="block text-xs text-slate-500 mb-0.5">Tarif /h (€)</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Tarifa /h (€)</label>
                 <input
                   type="number" step="0.01" min="0"
                   value={h.rate}
@@ -656,7 +656,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             </div>
           ))}
           <button type="button" onClick={addExtraHour} className="text-violet-600 hover:underline text-sm flex items-center gap-1">
-            <Plus className="w-4 h-4" /> Ajouter des heures supp.
+            <Plus className="w-4 h-4" /> Adicionar horas extras
           </button>
         </div>
       </div>
@@ -665,7 +665,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Package className="w-4 h-4 text-slate-600" />}
-          title="Autres lignes"
+          title="Outros itens"
           color="bg-slate-50 border-b border-slate-200"
         />
         <div className="p-4 space-y-3">
@@ -676,7 +676,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 <input
                   value={item.description}
                   onChange={(e) => updateOtherItem(i, 'description', e.target.value)}
-                  placeholder="Description de la ligne"
+                  placeholder="Descrição do item"
                   className={INPUT}
                 />
               </div>
@@ -706,7 +706,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             </div>
           ))}
           <button type="button" onClick={addOtherItem} className="text-slate-600 hover:underline text-sm flex items-center gap-1">
-            <Plus className="w-4 h-4" /> Ajouter une ligne libre
+            <Plus className="w-4 h-4" /> Adicionar item livre
           </button>
         </div>
       </div>
@@ -715,7 +715,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       <div className="bg-primary-50 border border-primary-200 rounded-xl px-6 py-4 flex justify-between items-center">
         <span className="font-semibold text-slate-700">Total HT</span>
         <span className="text-2xl font-bold text-primary-700">{totalHt.toFixed(2)} €</span>
-        <span className="text-sm text-slate-500 ml-2">(TVA non applicable)</span>
+        <span className="text-sm text-slate-500 ml-2">(TVA não aplicável)</span>
       </div>
 
       {/* ── Actions ── */}
@@ -725,10 +725,10 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           disabled={loading}
           className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium text-sm"
         >
-          {loading ? 'Enregistrement...' : invoice ? 'Mettre à jour' : 'Créer la facture'}
+          {loading ? 'Salvando...' : invoice ? 'Atualizar' : 'Criar fatura'}
         </button>
         <Link href="/invoices" className="px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-          Annuler
+          Cancelar
         </Link>
       </div>
     </form>

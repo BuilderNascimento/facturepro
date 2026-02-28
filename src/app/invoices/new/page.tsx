@@ -31,7 +31,7 @@ export default async function NewInvoicePage() {
   const { clients, properties } = await getData();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Nouvelle facture</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Nova fatura</h1>
       <InvoiceForm clients={clients as never} properties={properties as never} />
     </div>
   );

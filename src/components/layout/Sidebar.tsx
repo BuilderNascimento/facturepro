@@ -9,12 +9,12 @@ import {
 import { createClient } from '@/lib/supabase/client';
 
 const nav = [
-  { href: '/dashboard', label: 'Accueil', icon: Home },
-  { href: '/invoices', label: 'Documents', icon: FileText },
-  { href: '/clients', label: 'Clients', icon: Users },
-  { href: '/properties', label: 'Appartements', icon: Building2 },
-  { href: '/services', label: 'Articles', icon: Briefcase },
-  { href: '/settings', label: 'Paramètres', icon: Settings },
+  { href: '/dashboard', label: 'Início', icon: Home },
+  { href: '/invoices', label: 'Faturas', icon: FileText },
+  { href: '/clients', label: 'Clientes', icon: Users },
+  { href: '/properties', label: 'Locais de trabalho', icon: Building2 },
+  { href: '/services', label: 'Serviços', icon: Briefcase },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -80,23 +80,23 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           className="mt-4 flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg bg-primary-600 hover:bg-primary-500 text-white font-medium transition shadow-lg"
         >
           <Plus className="w-5 h-5" />
-          + Document
+          Fazer fatura
         </Link>
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-1">
         <a
-          href="mailto:support@facturepro.fr"
+          href="mailto:suporte@factureprobr.xyz"
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-cyan-200 hover:bg-white/10 transition text-sm"
         >
           <MessageCircle className="w-5 h-5 shrink-0" />
-          Une question ?
+          Precisa de ajuda?
         </a>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition text-sm"
         >
-          Déconnexion
+          Sair
         </button>
       </div>
     </aside>
