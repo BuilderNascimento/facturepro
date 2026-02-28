@@ -47,12 +47,15 @@ export default function RegisterPage() {
         return;
       }
 
-      // 2. Fazer login imediatamente para estabelecer sessão
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        setError('Conta criada, mas não foi possível fazer login. Tente entrar manualmente.');
-        setLoading(false);
-        return;
+      // 2. Se não retornou sessão (email confirmation ativo), tenta login manual
+      if (!data.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          // Provavelmente email não confirmado — redireciona para login com aviso
+          setError('Conta criada! Verifique seu email para confirmar e depois faça login.');
+          setLoading(false);
+          return;
+        }
       }
 
       // 3. Redirecionar para o Stripe checkout
