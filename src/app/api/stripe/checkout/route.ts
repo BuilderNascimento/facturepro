@@ -18,7 +18,7 @@ export async function POST() {
       customer_email: user.email,
       metadata: { user_id: user.id },
       subscription_data: { metadata: { user_id: user.id } },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://factureprobr.xyz'}/dashboard?payment=success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://factureprobr.xyz'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://factureprobr.xyz'}/subscribe?cancelled=true`,
       locale: 'pt-BR',
     });
