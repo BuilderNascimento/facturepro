@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const protectedPaths = ['/dashboard', '/clients', '/services', '/invoices', '/settings', '/properties'];
-const publicPaths = ['/', '/register', '/login'];
+const publicPaths = ['/', '/register', '/login', '/subscribe'];
 
 function isProtected(pathname: string) {
   return protectedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
@@ -31,13 +31,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Rotas públicas — deixa passar sem verificar Supabase
-  if (!isProtected(pathname) && !publicPaths.includes(pathname)) {
+  // Rotas de API do Stripe — nunca bloquear
+  if (pathname.startsWith('/api/stripe/')) {
     return NextResponse.next();
   }
-  if (pathname === '/register') return NextResponse.next();
 
-  // Sem credenciais configuradas — redirecionar para login
+  // Rotas públicas — deixa passar
+  if (publicPaths.includes(pathname) || (!isProtected(pathname) && pathname !== '/login')) {
+    return NextResponse.next();
+  }
+
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     if (isProtected(pathname)) {
       const url = request.nextUrl.clone();
@@ -63,20 +66,41 @@ export async function proxy(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Não logado → login
     if (!user && isProtected(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);
     }
+
+    // Logado + rota de login → dashboard
     if (user && pathname === '/login') {
       const url = request.nextUrl.clone();
       url.pathname = '/dashboard';
       return NextResponse.redirect(url);
     }
 
+    // Logado + rota protegida → verificar assinatura
+    if (user && isProtected(pathname)) {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('status, current_period_end')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const isActive = sub?.status === 'active' &&
+        sub?.current_period_end &&
+        new Date(sub.current_period_end) > new Date();
+
+      if (!isActive) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/subscribe';
+        return NextResponse.redirect(url);
+      }
+    }
+
     return response;
   } catch {
-    // Se Supabase falhar, redirecionar para login em rotas protegidas
     if (isProtected(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
