@@ -47,7 +47,15 @@ export default function RegisterPage() {
         return;
       }
 
-      // 2. Redirecionar para o Stripe checkout
+      // 2. Fazer login imediatamente para estabelecer sessão
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setError('Conta criada, mas não foi possível fazer login. Tente entrar manualmente.');
+        setLoading(false);
+        return;
+      }
+
+      // 3. Redirecionar para o Stripe checkout
       const res = await fetch('/api/stripe/checkout', { method: 'POST' });
       const json = await res.json();
 
