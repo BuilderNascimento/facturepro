@@ -6,6 +6,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const protectedPaths = ['/dashboard', '/clients', '/services', '/invoices', '/settings', '/properties'];
+const publicPaths = ['/', '/register', '/login'];
 
 function isProtected(pathname: string) {
   return protectedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
@@ -30,10 +31,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Se não é rota protegida nem /login, deixa passar sem verificar Supabase
-  if (!isProtected(pathname) && pathname !== '/login') {
+  // Rotas públicas — deixa passar sem verificar Supabase
+  if (!isProtected(pathname) && !publicPaths.includes(pathname)) {
     return NextResponse.next();
   }
+  if (pathname === '/register') return NextResponse.next();
 
   // Sem credenciais configuradas — redirecionar para login
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
