@@ -27,19 +27,19 @@ export default async function ServicesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-800">Articles</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Serviços</h1>
         <Link
           href="/services/new"
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition"
         >
           <Plus className="w-4 h-4" />
-          Nouveau article
+          Novo serviço
         </Link>
       </div>
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {!services.length ? (
           <div className="p-12 text-center text-slate-500">
-            Aucun article. <Link href="/services/new" className="text-primary-600 hover:underline">Ajouter</Link>
+            Nenhum serviço. <Link href="/services/new" className="text-primary-600 hover:underline">Adicionar</Link>
           </div>
         ) : (
           <ul className="divide-y divide-slate-200">
@@ -57,7 +57,7 @@ export default async function ServicesPage() {
                   className="mt-2 sm:mt-0 inline-flex items-center gap-1 text-primary-600 hover:underline text-sm"
                 >
                   <Pencil className="w-4 h-4" />
-                  Modifier
+                  Editar
                 </Link>
               </li>
             ))}

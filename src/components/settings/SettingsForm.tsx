@@ -62,7 +62,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     };
     const parsed = companySettingsSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
+      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
       setLoading(false);
       return;
     }
@@ -74,7 +74,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? 'Erreur serveur');
+      setError(data.error ?? 'Erro no servidor');
       return;
     }
     setSuccess(true);
@@ -84,64 +84,64 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
       {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
-      {success && <p className="text-green-700 text-sm bg-green-50 rounded-lg p-3">Paramètres enregistrés avec succès.</p>}
+      {success && <p className="text-green-700 text-sm bg-green-50 rounded-lg p-3">Configurações guardadas com sucesso.</p>}
 
-      {/* Identité de l'entreprise */}
+      {/* Identidade da empresa */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Identité</h2>
+        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Identidade</h2>
         <div className="space-y-4">
           <div>
-            <label className={L}>Raison sociale *</label>
-            <input name="company_name" defaultValue={defaultValues.company_name} required className={F} placeholder="Solution Nettoyage - EI" />
+            <label className={L}>Nome da empresa *</label>
+            <input name="company_name" defaultValue={defaultValues.company_name} required className={F} placeholder="Ex: Limpezas Silva - EI" />
           </div>
           <div>
-            <label className={L}>Forme juridique</label>
-            <input name="legal_status" defaultValue={defaultValues.legal_status} placeholder="ex. Entrepreneur individuel, SARL" className={F} />
+            <label className={L}>Forma jurídica</label>
+            <input name="legal_status" defaultValue={defaultValues.legal_status} placeholder="ex. Auto-entrepreneur, SARL" className={F} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-1">
               <label className={L}>SIRET</label>
-              <input name="siret" defaultValue={defaultValues.siret} className={F} placeholder="14 chiffres" />
+              <input name="siret" defaultValue={defaultValues.siret} className={F} placeholder="14 dígitos" />
             </div>
             <div>
-              <label className={L}>Code APE / NAF</label>
+              <label className={L}>Código APE / NAF</label>
               <input name="ape_naf" defaultValue={defaultValues.ape_naf} className={F} placeholder="ex. 8121Z" />
             </div>
             <div>
-              <label className={L}>N° TVA intracommunautaire</label>
+              <label className={L}>N° TVA intracomunitário</label>
               <input name="vat_number" defaultValue={defaultValues.vat_number} className={F} placeholder="FR 00 XXX XXX XXX" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Coordonnées */}
+      {/* Contacto */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Coordonnées</h2>
+        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Contacto</h2>
         <div className="space-y-4">
           <div>
-            <label className={L}>Adresse</label>
-            <textarea name="address" rows={2} defaultValue={defaultValues.address} className={F} placeholder="Rue, code postal, ville, pays" />
+            <label className={L}>Endereço</label>
+            <textarea name="address" rows={2} defaultValue={defaultValues.address} className={F} placeholder="Rua, código postal, cidade, país" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={L}>Email</label>
-              <input name="email" type="email" defaultValue={defaultValues.email} className={F} placeholder="contact@monentreprise.fr" />
+              <input name="email" type="email" defaultValue={defaultValues.email} className={F} placeholder="contato@minhaempresa.fr" />
             </div>
             <div>
-              <label className={L}>Téléphone</label>
+              <label className={L}>Telefone</label>
               <input name="phone" defaultValue={defaultValues.phone} className={F} placeholder="+33 6 00 00 00 00" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Informations bancaires */}
+      {/* Dados bancários */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Informations bancaires</h2>
+        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Dados bancários</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className={L}>Nom de la banque</label>
+            <label className={L}>Nome do banco</label>
             <input name="bank_name" defaultValue={defaultValues.bank_name} className={F} placeholder="ex. Wise, BNP…" />
           </div>
           <div>
@@ -155,31 +155,31 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         </div>
       </div>
 
-      {/* Conditions de paiement */}
+      {/* Condições de pagamento */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Conditions de paiement</h2>
+        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Condições de pagamento</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={L}>Délai de paiement (jours)</label>
+            <label className={L}>Prazo de pagamento (dias)</label>
             <input name="default_payment_terms" type="number" min="0" defaultValue={defaultValues.default_payment_terms} className={F} />
           </div>
           <div>
-            <label className={L}>Pénalités de retard (%)</label>
+            <label className={L}>Juros de mora (%)</label>
             <input name="late_penalty_rate" type="number" step="0.01" min="0" max="100" defaultValue={defaultValues.late_penalty_rate} className={F} />
           </div>
         </div>
       </div>
 
-      {/* Mentions légales */}
+      {/* Menções legais (saem em francês na fatura) */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Mentions légales</h2>
+        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Menções legais <span className="text-xs font-normal text-slate-400">(aparecem em francês na fatura)</span></h2>
         <div className="space-y-4">
           <div>
-            <label className={L}>Mention TVA</label>
+            <label className={L}>Menção TVA</label>
             <textarea name="legal_text_default" rows={2} defaultValue={defaultValues.legal_text_default} className={F} />
           </div>
           <div>
-            <label className={L}>Clause indemnité de recouvrement</label>
+            <label className={L}>Cláusula de cobrança</label>
             <textarea name="indemnity_text_default" rows={3} defaultValue={defaultValues.indemnity_text_default} className={F} />
           </div>
         </div>
@@ -187,7 +187,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
       <div className="pt-2">
         <button type="submit" disabled={loading} className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium text-sm">
-          {loading ? 'Enregistrement...' : 'Enregistrer les paramètres'}
+          {loading ? 'Salvando...' : 'Guardar configurações'}
         </button>
       </div>
     </form>

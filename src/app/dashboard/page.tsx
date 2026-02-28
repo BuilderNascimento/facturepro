@@ -59,19 +59,19 @@ export default async function DashboardPage() {
     .slice(0, 5);
 
   const statusLabels: Record<string, string> = {
-    draft: 'Brouillon', sent: 'Envoyée', paid: 'Payée', overdue: 'En retard',
+    draft: 'Rascunho', sent: 'Em Espera', paid: 'Paga', overdue: 'Em Atraso',
   };
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-800">Accueil</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Início</h1>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg font-semibold text-slate-800">
-                Chiffre d&apos;affaires (HT)
+                Faturamento (HT)
               </CardTitle>
               <span className="text-sm text-slate-500">{year}</span>
             </CardHeader>
@@ -88,12 +88,12 @@ export default async function DashboardPage() {
                   <CheckCircle2 className="w-6 h-6" />
                 </span>
                 <div>
-                  <p className="font-medium mb-1">FacturePro</p>
+                  <p className="font-medium mb-1">FactureProBR</p>
                   <p className="text-sm text-white/90 mb-4">
-                    Solution de facturation conforme pour micro-entrepreneurs en France.
+                    Faturas profissionais no padrão francês para brasileiros na França.
                   </p>
                   <Link href="/settings" className="text-sm font-medium text-white/95 hover:underline">
-                    Configurer → 
+                    Configurar →
                   </Link>
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">Documents en cours</h2>
+        <h2 className="text-lg font-semibold text-slate-800 mb-4">Faturas em curso</h2>
         <Card>
           <CardHeader className="pb-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -114,22 +114,22 @@ export default async function DashboardPage() {
                 <CardTitle className="text-base">Factures</CardTitle>
               </div>
               <Link href="/invoices/new" className="text-sm font-medium text-primary-600 hover:underline">
-                + Ajouter
+                + Nova fatura
               </Link>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { label: 'Brouillon', value: draftTotal, count: draftInvoices.length, color: 'text-slate-800' },
-                { label: 'En Attente', value: sentTotal, count: sentInvoices.length, color: 'text-slate-800' },
-                { label: 'En Retard', value: overdueTotal, count: overdueInvoices.length, color: 'text-red-600' },
-                { label: 'Payées', value: paidTotal, count: paidInvoices.length, color: 'text-emerald-600' },
+                { label: 'Rascunho', value: draftTotal, count: draftInvoices.length, color: 'text-slate-800' },
+                { label: 'Em Espera', value: sentTotal, count: sentInvoices.length, color: 'text-slate-800' },
+                { label: 'Em Atraso', value: overdueTotal, count: overdueInvoices.length, color: 'text-red-600' },
+                { label: 'Pagas', value: paidTotal, count: paidInvoices.length, color: 'text-emerald-600' },
               ].map(({ label, value, count, color }) => (
                 <div key={label} className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
                   <p className={`mt-1 text-lg font-semibold ${color}`}>{value.toFixed(2)} € HT</p>
-                  <p className="text-sm text-slate-500">{count} document{count !== 1 ? 's' : ''}</p>
+                  <p className="text-sm text-slate-500">{count} fatura{count !== 1 ? 's' : ''}</p>
                 </div>
               ))}
             </div>
@@ -139,12 +139,12 @@ export default async function DashboardPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Dernières factures</CardTitle>
-          <Link href="/invoices" className="text-sm text-primary-600 hover:underline">Voir tout</Link>
+          <CardTitle>Últimas faturas</CardTitle>
+          <Link href="/invoices" className="text-sm text-primary-600 hover:underline">Ver todas</Link>
         </CardHeader>
         <CardContent>
           {!recentInvoices.length ? (
-            <p className="text-slate-500 text-sm">Aucune facture.</p>
+            <p className="text-slate-500 text-sm">Nenhuma fatura ainda.</p>
           ) : (
             <ul className="divide-y divide-slate-200">
               {recentInvoices.map((inv) => (

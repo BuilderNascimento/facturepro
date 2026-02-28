@@ -14,9 +14,9 @@ export default async function SettingsPage() {
   const settings = await getSettings();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Paramètres de l&apos;entreprise</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Configurações da empresa</h1>
       <p className="text-slate-600">
-        Ces informations apparaîtront sur vos factures.
+        Estas informações aparecerão nas suas faturas.
       </p>
       <SettingsForm settings={settings} />
     </div>

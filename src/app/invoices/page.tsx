@@ -4,10 +4,10 @@ import { InvoicesTable } from '@/components/invoices/InvoicesTable';
 import { InvoicesFilters } from '@/components/invoices/InvoicesFilters';
 
 const statusLabels: Record<string, string> = {
-  draft: 'Brouillon',
-  sent: 'En Attente',
-  paid: 'Payée',
-  overdue: 'En Retard',
+  draft: 'Rascunho',
+  sent: 'Em Espera',
+  paid: 'Paga',
+  overdue: 'Em Atraso',
 };
 
 async function getInvoices() {
@@ -52,12 +52,12 @@ export default async function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Documents</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Faturas</h1>
       <InvoicesFilters />
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {!rows.length ? (
           <div className="p-12 text-center text-slate-500">
-            Aucun document. <Link href="/invoices/new" className="text-primary-600 hover:underline">Créer une facture</Link>
+            Nenhuma fatura. <Link href="/invoices/new" className="text-primary-600 hover:underline">Criar fatura</Link>
           </div>
         ) : (
           <InvoicesTable rows={rows} statusLabels={statusLabels} />
