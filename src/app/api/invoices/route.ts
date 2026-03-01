@@ -9,8 +9,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.errors[0]?.message }, { status: 400 });
   }
 
+  const tvaRate = parsed.data.tva_rate ?? 0;
   const totalHt = parsed.data.items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
-  const totalTva = 0;
+  const totalTva = Math.round(totalHt * tvaRate) / 100;
   const totalTtc = totalHt + totalTva;
 
   if (IS_DEMO) {
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
         issue_date: parsed.data.issue_date,
         due_date: parsed.data.due_date,
         status: parsed.data.status,
+        tva_rate: tvaRate,
         total_ht: totalHt,
         total_tva: totalTva,
         total_ttc: totalTtc,
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
       issue_date: parsed.data.issue_date,
       due_date: parsed.data.due_date,
       status: parsed.data.status,
+      tva_rate: tvaRate,
       total_ht: totalHt,
       total_tva: totalTva,
       total_ttc: totalTtc,

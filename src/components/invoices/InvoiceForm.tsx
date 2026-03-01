@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
-import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X } from 'lucide-react';
+import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info } from 'lucide-react';
 import { invoiceSchema } from '@/lib/validations/schemas';
 
 interface Client { id: string; company_name: string; email: string | null; }
@@ -22,6 +22,7 @@ interface CleaningEntry { date: string; }
 interface DisplacementEntry { description: string; amount: number; }
 interface ExtraHourEntry { description: string; hours: number; rate: number; }
 interface OtherItem { description: string; quantity: number; unit_price: number; }
+interface WorkDayEntry { date: string; description: string; hours: number; rate: number; }
 
 interface ApartmentBlock {
   key: string;
@@ -38,6 +39,7 @@ interface InvoiceFormProps {
     issue_date: string;
     due_date: string;
     status: string;
+    tva_rate?: number;
     items: { service_id: string | null; description: string; quantity: number; unit_price: number }[];
   };
   clients?: Client[];
@@ -48,12 +50,24 @@ interface InvoiceFormProps {
 const INPUT = 'w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm';
 const LABEL = 'block text-sm font-medium text-slate-700 mb-1';
 
-function SectionHeader({ icon, title, color }: { icon: React.ReactNode; title: string; color: string }) {
+function SectionHeader({ icon, title, color, tooltip }: { icon: React.ReactNode; title: string; color: string; tooltip?: string }) {
   return (
     <div className={`flex items-center gap-2 px-4 py-3 rounded-t-lg ${color}`}>
       {icon}
       <h3 className="font-semibold text-sm">{title}</h3>
+      {tooltip && (
+        <span className="ml-auto text-xs text-slate-500 italic hidden sm:block">{tooltip}</span>
+      )}
     </div>
+  );
+}
+
+function Tip({ text }: { text: string }) {
+  return (
+    <p className="flex items-start gap-1.5 text-xs text-slate-500 mt-1.5">
+      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-400" />
+      {text}
+    </p>
   );
 }
 
@@ -65,30 +79,30 @@ function formatDateLabel(d: string) {
 let blockCounter = 0;
 function newKey() { return `block-${++blockCounter}`; }
 
+type Mode = 'property' | 'client' | 'obras';
+
 export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber: initialNextNumber }: InvoiceFormProps) {
   const router = useRouter();
   const [nextNumber, setNextNumber] = useState(initialNextNumber ?? '');
-  const [mode, setMode] = useState<'property' | 'client'>('property');
 
-  // "Par appartements" mode
+  // When editing an existing invoice, default to 'client' mode to avoid empty block validation
+  const [mode, setMode] = useState<Mode>(invoice ? 'client' : 'property');
+
   const [clientId, setClientId] = useState(invoice?.client_id ?? '');
   const [apartmentBlocks, setApartmentBlocks] = useState<ApartmentBlock[]>([
     { key: newKey(), propertyId: '', normalDates: [], extraDates: [] },
   ]);
-
-  // "Par client direct" mode
   const [directClientId, setDirectClientId] = useState(invoice?.client_id ?? '');
 
   const [issueDate, setIssueDate] = useState(invoice?.issue_date ?? format(new Date(), 'yyyy-MM-dd'));
   const [dueDate, setDueDate] = useState(invoice?.due_date ?? format(addDays(new Date(), 30), 'yyyy-MM-dd'));
   const [status, setStatus] = useState(invoice?.status ?? 'draft');
+  const [tvaRate, setTvaRate] = useState<number>(invoice?.tva_rate ?? 0);
 
-  // Déplacements
   const [displacements, setDisplacements] = useState<DisplacementEntry[]>([]);
-  // Heures supplémentaires
   const [extraHours, setExtraHours] = useState<ExtraHourEntry[]>([]);
-  // Autres lignes
   const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
+  const [workDays, setWorkDays] = useState<WorkDayEntry[]>([{ date: '', description: '', hours: 8, rate: 0 }]);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -110,67 +124,42 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     }
   }, [invoice, initialNextNumber]);
 
-  // Apartments filtered by selected client
   const clientApartments = properties.filter((p) => p.client_id === clientId);
 
-  // ── Apartment blocks helpers ──
   function addApartmentBlock() {
     setApartmentBlocks((prev) => [...prev, { key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]);
   }
-
   function removeApartmentBlock(key: string) {
     setApartmentBlocks((prev) => prev.filter((b) => b.key !== key));
   }
-
   function updateBlockProperty(key: string, propertyId: string) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => b.key === key ? { ...b, propertyId } : b)
-    );
+    setApartmentBlocks((prev) => prev.map((b) => b.key === key ? { ...b, propertyId } : b));
   }
-
   function addNormalDate(key: string) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => b.key === key ? { ...b, normalDates: [...b.normalDates, { date: '' }] } : b)
-    );
+    setApartmentBlocks((prev) => prev.map((b) => b.key === key ? { ...b, normalDates: [...b.normalDates, { date: '' }] } : b));
   }
-
   function removeNormalDate(key: string, i: number) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => b.key === key ? { ...b, normalDates: b.normalDates.filter((_, idx) => idx !== i) } : b)
-    );
+    setApartmentBlocks((prev) => prev.map((b) => b.key === key ? { ...b, normalDates: b.normalDates.filter((_, idx) => idx !== i) } : b));
   }
-
   function updateNormalDate(key: string, i: number, date: string) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => {
-        if (b.key !== key) return b;
-        const nd = [...b.normalDates]; nd[i] = { date }; return { ...b, normalDates: nd };
-      })
-    );
+    setApartmentBlocks((prev) => prev.map((b) => {
+      if (b.key !== key) return b;
+      const nd = [...b.normalDates]; nd[i] = { date }; return { ...b, normalDates: nd };
+    }));
   }
-
   function addExtraDate(key: string) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => b.key === key ? { ...b, extraDates: [...b.extraDates, { date: '' }] } : b)
-    );
+    setApartmentBlocks((prev) => prev.map((b) => b.key === key ? { ...b, extraDates: [...b.extraDates, { date: '' }] } : b));
   }
-
   function removeExtraDate(key: string, i: number) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => b.key === key ? { ...b, extraDates: b.extraDates.filter((_, idx) => idx !== i) } : b)
-    );
+    setApartmentBlocks((prev) => prev.map((b) => b.key === key ? { ...b, extraDates: b.extraDates.filter((_, idx) => idx !== i) } : b));
   }
-
   function updateExtraDate(key: string, i: number, date: string) {
-    setApartmentBlocks((prev) =>
-      prev.map((b) => {
-        if (b.key !== key) return b;
-        const ed = [...b.extraDates]; ed[i] = { date }; return { ...b, extraDates: ed };
-      })
-    );
+    setApartmentBlocks((prev) => prev.map((b) => {
+      if (b.key !== key) return b;
+      const ed = [...b.extraDates]; ed[i] = { date }; return { ...b, extraDates: ed };
+    }));
   }
 
-  // ── Global section helpers ──
   function addDisplacement() { setDisplacements((p) => [...p, { description: '', amount: 0 }]); }
   function removeDisplacement(i: number) { setDisplacements((p) => p.filter((_, idx) => idx !== i)); }
   function updateDisplacement(i: number, field: keyof DisplacementEntry, value: string | number) {
@@ -189,7 +178,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     setOtherItems((p) => { const n = [...p]; n[i] = { ...n[i], [field]: value }; return n; });
   }
 
-  // ── Build invoice items from all apartment blocks ──
+  function addWorkDay() { setWorkDays((p) => [...p, { date: '', description: '', hours: 8, rate: 0 }]); }
+  function removeWorkDay(i: number) { setWorkDays((p) => p.filter((_, idx) => idx !== i)); }
+  function updateWorkDay(i: number, field: keyof WorkDayEntry, value: string | number) {
+    setWorkDays((p) => { const n = [...p]; n[i] = { ...n[i], [field]: value }; return n; });
+  }
+
   function buildItems() {
     const items: { service_id: null; description: string; quantity: number; unit_price: number }[] = [];
 
@@ -199,33 +193,45 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         const aptName = prop?.name ?? '';
         const normalPrice = Number(prop?.normal_price ?? 0);
         const extraPrice = Number(prop?.extra_price ?? 0);
-
         const validNormal = block.normalDates.filter((d) => d.date);
         if (validNormal.length > 0) {
           const dateList = validNormal.map((d) => formatDateLabel(d.date)).join(', ');
           items.push({
             service_id: null,
-            description: aptName
-              ? `Nettoyage normal — ${aptName} — ${dateList}`
-              : `Nettoyage normal — ${dateList}`,
+            description: aptName ? `Nettoyage normal — ${aptName} — ${dateList}` : `Nettoyage normal — ${dateList}`,
             quantity: validNormal.length,
             unit_price: normalPrice,
           });
         }
-
         const validExtra = block.extraDates.filter((d) => d.date);
         if (validExtra.length > 0) {
           const dateList = validExtra.map((d) => formatDateLabel(d.date)).join(', ');
           items.push({
             service_id: null,
-            description: aptName
-              ? `Nettoyage extra — ${aptName} — ${dateList}`
-              : `Nettoyage extra — ${dateList}`,
+            description: aptName ? `Nettoyage extra — ${aptName} — ${dateList}` : `Nettoyage extra — ${dateList}`,
             quantity: validExtra.length,
             unit_price: extraPrice,
           });
         }
       }
+    }
+
+    if (mode === 'obras') {
+      workDays.forEach((day) => {
+        if (day.date || day.description || day.rate > 0) {
+          const dateLabel = day.date ? formatDateLabel(day.date) : '';
+          items.push({
+            service_id: null,
+            description: [
+              'Prestation de services',
+              day.description || null,
+              dateLabel || null,
+            ].filter(Boolean).join(' — '),
+            quantity: day.hours || 1,
+            unit_price: day.rate,
+          });
+        }
+      });
     }
 
     displacements.forEach((d) => {
@@ -259,17 +265,17 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     return items;
   }
 
-  // ── Running total ──
   const totalHt = (() => {
     let t = 0;
     if (mode === 'property') {
       for (const block of apartmentBlocks) {
         const prop = properties.find((p) => p.id === block.propertyId);
-        const normalPrice = Number(prop?.normal_price ?? 0);
-        const extraPrice = Number(prop?.extra_price ?? 0);
-        t += block.normalDates.filter((d) => d.date).length * normalPrice;
-        t += block.extraDates.filter((d) => d.date).length * extraPrice;
+        t += block.normalDates.filter((d) => d.date).length * Number(prop?.normal_price ?? 0);
+        t += block.extraDates.filter((d) => d.date).length * Number(prop?.extra_price ?? 0);
       }
+    }
+    if (mode === 'obras') {
+      workDays.forEach((d) => { t += d.hours * d.rate; });
     }
     displacements.forEach((d) => { t += d.amount; });
     extraHours.forEach((h) => { t += h.hours * h.rate; });
@@ -277,13 +283,16 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     return t;
   })();
 
+  const totalTva = Math.round(totalHt * tvaRate) / 100;
+  const totalTtc = totalHt + totalTva;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     const items = buildItems();
     if (!items.length) {
-      setError('Adicione pelo menos um item (limpeza, deslocamento ou outro).');
+      setError('Adicione pelo menos um item (limpeza, diária, deslocamento ou outro).');
       return;
     }
 
@@ -293,15 +302,16 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       return;
     }
 
-    if (mode === 'property' && apartmentBlocks.some((b) => !b.propertyId)) {
-      setError('Selecione um local para cada bloco, ou remova os blocos vazios.');
+    // Only validate blocks when in property mode (not when editing)
+    if (mode === 'property' && apartmentBlocks.some((b) => !b.propertyId && (b.normalDates.length > 0 || b.extraDates.length > 0))) {
+      setError('Selecione um local para cada bloco com datas, ou remova os blocos vazios.');
       return;
     }
 
-    const raw = { client_id: usedClientId, issue_date: issueDate, due_date: dueDate, status, items };
+    const raw = { client_id: usedClientId, issue_date: issueDate, due_date: dueDate, status, tva_rate: tvaRate, items };
     const parsed = invoiceSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
+      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
       return;
     }
 
@@ -324,38 +334,54 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
 
-      {/* ── En-tête ── */}
+      {/* ── Cabeçalho ── */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-slate-500 text-sm bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5">
+          <Info className="w-4 h-4 text-blue-500 shrink-0" />
+          <span>Preencha os campos abaixo para criar a sua fatura. Todos os campos com <strong>*</strong> são obrigatórios.</span>
+        </div>
+
         {invoice && (
           <p className="text-slate-600 text-sm">
-            <span className="font-medium">N° facture :</span>{' '}
+            <span className="font-medium">N° fatura:</span>{' '}
             <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">{invoice.invoice_number}</span>
           </p>
         )}
         {!invoice && nextNumber && (
           <p className="text-slate-600 text-sm">
-            <span className="font-medium">N° facture :</span>{' '}
+            <span className="font-medium">N° fatura:</span>{' '}
             <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">{nextNumber}</span>
           </p>
         )}
 
-        {/* Mode selector */}
+        {/* Seletor de modo */}
         {!invoice && (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setMode('property')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'property' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-            >
-              Por local de trabalho
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('client')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'client' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-            >
-              Por cliente direto
-            </button>
+          <div>
+            <label className={LABEL}>Tipo de trabalho *</label>
+            <Tip text="Escolha o tipo que melhor descreve o seu serviço. Pode sempre usar 'Livre' para qualquer outro caso." />
+            <div className="flex flex-wrap gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setMode('property')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${mode === 'property' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              >
+                <Building2 className="w-4 h-4" /> Limpeza de imóveis
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('obras')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${mode === 'obras' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              >
+                <HardHat className="w-4 h-4" /> Obras / Diárias
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('client')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${mode === 'client' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              >
+                <Package className="w-4 h-4" /> Livre / Outros serviços
+              </button>
+            </div>
           </div>
         )}
 
@@ -363,12 +389,13 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           {/* Seleção cliente */}
           {mode === 'property' ? (
             <div className="md:col-span-2">
-              <label className={LABEL}>Cliente / Proprietário *</label>
+              <label className={LABEL}>Cliente *</label>
+              <Tip text="Selecione o cliente. Os locais de trabalho registados aparecerão abaixo." />
               <select
                 value={clientId}
                 onChange={(e) => { setClientId(e.target.value); setApartmentBlocks([{ key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]); }}
                 required={mode === 'property'}
-                className={INPUT}
+                className={`${INPUT} mt-2`}
               >
                 <option value="">Selecionar cliente</option>
                 {clients.map((c) => (
@@ -382,7 +409,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               <select
                 value={directClientId}
                 onChange={(e) => setDirectClientId(e.target.value)}
-                required={mode === 'client' || !!invoice}
+                required={mode !== 'property' || !!invoice}
                 className={INPUT}
               >
                 <option value="">Selecionar cliente</option>
@@ -394,7 +421,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           )}
 
           <div>
-            <label className={LABEL}>Status</label>
+            <label className={LABEL}>Estado</label>
             <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
               <option value="draft">Rascunho</option>
               <option value="sent">Enviada</option>
@@ -403,17 +430,28 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             </select>
           </div>
           <div>
+            <label className={LABEL}>TVA</label>
+            <Tip text="Maioria dos auto-empreendedores usa 'Sem TVA'. Escolha uma % apenas se tiver TVA ativa." />
+            <select value={tvaRate} onChange={(e) => setTvaRate(Number(e.target.value))} className={`${INPUT} mt-2`}>
+              <option value={0}>Sem TVA (art. 293B)</option>
+              <option value={5.5}>5,5%</option>
+              <option value={10}>10%</option>
+              <option value={20}>20%</option>
+            </select>
+          </div>
+          <div>
             <label className={LABEL}>Data de emissão *</label>
             <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required className={INPUT} />
           </div>
           <div>
             <label className={LABEL}>Data de vencimento *</label>
-            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required className={INPUT} />
+            <Tip text="Data limite para o cliente efetuar o pagamento." />
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required className={`${INPUT} mt-2`} />
           </div>
         </div>
       </div>
 
-      {/* ── Blocs d'appartements ── */}
+      {/* ── Blocos de imóveis (modo limpeza) ── */}
       {mode === 'property' && (
         <>
           {apartmentBlocks.map((block, blockIndex) => {
@@ -425,13 +463,11 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
             return (
               <div key={block.key} className="bg-white rounded-xl border border-primary-200 shadow-sm overflow-hidden">
-                {/* Bloc header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-primary-50 border-b border-primary-100">
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-primary-700" />
                     <span className="font-semibold text-sm text-primary-800">
-                      Local {blockIndex + 1}
-                      {prop ? ` — ${prop.name}` : ''}
+                      Local {blockIndex + 1}{prop ? ` — ${prop.name}` : ''}
                     </span>
                   </div>
                   {apartmentBlocks.length > 1 && (
@@ -439,7 +475,6 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                       type="button"
                       onClick={() => removeApartmentBlock(block.key)}
                       className="p-1 text-red-400 hover:bg-red-50 rounded transition"
-                      title="Supprimer ce bloc"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -447,7 +482,6 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 </div>
 
                 <div className="p-4 space-y-4">
-                  {/* Sélection appartement */}
                   <div>
                     <label className={LABEL}>Local de trabalho *</label>
                     {!clientId ? (
@@ -474,17 +508,18 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
                     {prop && (
                       <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600 bg-slate-50 rounded-lg p-3">
-                        <span>Valor normal : <strong>{normalPrice.toFixed(2)} €</strong></span>
-                        <span>Valor extra : <strong>{extraPrice.toFixed(2)} €</strong></span>
+                        <span>Valor normal: <strong>{normalPrice.toFixed(2)} €</strong></span>
+                        <span>Valor extra: <strong>{extraPrice.toFixed(2)} €</strong></span>
                       </div>
                     )}
                   </div>
 
-                  {/* Nettoyages normaux */}
+                  {/* Limpezas normais */}
                   <div className="rounded-lg border border-blue-100 overflow-hidden">
                     <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border-b border-blue-100">
                       <CalendarDays className="w-3.5 h-3.5 text-blue-700" />
                       <span className="text-xs font-semibold text-blue-800">Limpezas normais</span>
+                      <span className="text-xs text-blue-600 ml-1">— clique em "Adicionar data" para cada dia trabalhado</span>
                       {validNormal.length > 0 && prop && (
                         <span className="ml-auto text-xs text-blue-700 font-medium">
                           {validNormal.length} × {normalPrice.toFixed(2)} € = <strong>{(validNormal.length * normalPrice).toFixed(2)} €</strong>
@@ -516,11 +551,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                     </div>
                   </div>
 
-                  {/* Nettoyages extra */}
+                  {/* Limpezas extra */}
                   <div className="rounded-lg border border-emerald-100 overflow-hidden">
                     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border-b border-emerald-100">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
                       <span className="text-xs font-semibold text-emerald-800">Limpezas extra</span>
+                      <span className="text-xs text-emerald-600 ml-1">— limpeza mais profunda com valor diferenciado</span>
                       {validExtra.length > 0 && prop && (
                         <span className="ml-auto text-xs text-emerald-700 font-medium">
                           {validExtra.length} × {extraPrice.toFixed(2)} € = <strong>{(validExtra.length * extraPrice).toFixed(2)} €</strong>
@@ -556,7 +592,6 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             );
           })}
 
-          {/* Bouton ajouter appartement */}
           {clientId && (
             <button
               type="button"
@@ -570,18 +605,102 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </>
       )}
 
-      {/* ── Déplacements ── */}
+      {/* ── Obras / Diárias ── */}
+      {mode === 'obras' && (
+        <div className="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
+          <SectionHeader
+            icon={<HardHat className="w-4 h-4 text-orange-700" />}
+            title="Diárias de trabalho"
+            color="bg-orange-50 border-b border-orange-100"
+            tooltip="Cada linha = um dia ou período de trabalho"
+          />
+          <div className="p-4 space-y-1">
+            <p className="text-xs text-slate-500 mb-3">
+              <Info className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
+              Adicione uma linha por dia trabalhado. Coloque a data, o que foi feito, as horas e o valor daquele dia.
+            </p>
+            {workDays.map((day, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-end border border-slate-100 rounded-lg p-3 bg-slate-50">
+                <div className="col-span-3">
+                  <label className="block text-xs text-slate-500 mb-0.5">Data</label>
+                  <input
+                    type="date"
+                    value={day.date}
+                    onChange={(e) => updateWorkDay(i, 'date', e.target.value)}
+                    className={INPUT}
+                  />
+                </div>
+                <div className="col-span-4">
+                  <label className="block text-xs text-slate-500 mb-0.5">O que foi feito</label>
+                  <input
+                    value={day.description}
+                    onChange={(e) => updateWorkDay(i, 'description', e.target.value)}
+                    placeholder="Ex: Pintura sala, demolição…"
+                    className={INPUT}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-slate-500 mb-0.5">Horas</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0.5"
+                    value={day.hours}
+                    onChange={(e) => updateWorkDay(i, 'hours', parseFloat(e.target.value) || 0)}
+                    className={INPUT}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-slate-500 mb-0.5">Valor do dia (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={day.rate}
+                    onChange={(e) => updateWorkDay(i, 'rate', parseFloat(e.target.value) || 0)}
+                    className={INPUT}
+                  />
+                </div>
+                <div className="col-span-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeWorkDay(i)}
+                    disabled={workDays.length === 1}
+                    className="p-1.5 text-red-400 hover:bg-red-50 rounded disabled:opacity-30"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                {day.hours > 0 && day.rate > 0 && (
+                  <div className="col-span-12 text-right text-xs text-orange-700 font-medium -mt-1">
+                    Subtotal: {(day.hours * day.rate).toFixed(2)} €
+                  </div>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={addWorkDay} className="text-orange-700 hover:underline text-sm flex items-center gap-1 mt-2">
+              <Plus className="w-4 h-4" /> Adicionar dia de trabalho
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Deslocamentos ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Car className="w-4 h-4 text-amber-700" />}
           title="Deslocamentos"
           color="bg-amber-50 border-b border-amber-100"
+          tooltip="Km percorridos ou transporte pago para chegar ao local"
         />
         <div className="p-4 space-y-3">
+          {displacements.length === 0 && (
+            <p className="text-xs text-slate-400 italic">Nenhum deslocamento. Clique abaixo para adicionar se aplicável.</p>
+          )}
           {displacements.map((d, i) => (
             <div key={i} className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-7">
-                <label className="block text-xs text-slate-500 mb-0.5">Description</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Descrição</label>
                 <input
                   value={d.description}
                   onChange={(e) => updateDisplacement(i, 'description', e.target.value)}
@@ -611,18 +730,22 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       </div>
 
-      {/* ── Heures supplémentaires ── */}
+      {/* ── Horas extras ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Clock className="w-4 h-4 text-violet-700" />}
           title="Horas extras"
           color="bg-violet-50 border-b border-violet-100"
+          tooltip="Trabalho adicional cobrado por hora (ex: limpeza forno, coifa…)"
         />
         <div className="p-4 space-y-3">
+          {extraHours.length === 0 && (
+            <p className="text-xs text-slate-400 italic">Nenhuma hora extra. Clique abaixo para adicionar se aplicável.</p>
+          )}
           {extraHours.map((h, i) => (
             <div key={i} className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-5">
-                <label className="block text-xs text-slate-500 mb-0.5">Description</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Descrição</label>
                 <input
                   value={h.description}
                   onChange={(e) => updateExtraHour(i, 'description', e.target.value)}
@@ -661,27 +784,31 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       </div>
 
-      {/* ── Autres lignes ── */}
+      {/* ── Outros itens ── */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Package className="w-4 h-4 text-slate-600" />}
           title="Outros itens"
           color="bg-slate-50 border-b border-slate-200"
+          tooltip="Materiais comprados, serviços pontuais ou qualquer outro item livre"
         />
         <div className="p-4 space-y-3">
+          {otherItems.length === 0 && (
+            <p className="text-xs text-slate-400 italic">Nenhum item. Clique abaixo para adicionar materiais ou serviços livres.</p>
+          )}
           {otherItems.map((item, i) => (
             <div key={i} className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-6">
-                <label className="block text-xs text-slate-500 mb-0.5">Description *</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Descrição *</label>
                 <input
                   value={item.description}
                   onChange={(e) => updateOtherItem(i, 'description', e.target.value)}
-                  placeholder="Descrição do item"
+                  placeholder="Ex: Produtos de limpeza, tinta…"
                   className={INPUT}
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-xs text-slate-500 mb-0.5">Qté</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Qtd</label>
                 <input
                   type="number" step="0.01" min="0.01"
                   value={item.quantity}
@@ -690,7 +817,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 />
               </div>
               <div className="col-span-3">
-                <label className="block text-xs text-slate-500 mb-0.5">Prix unit. (€)</label>
+                <label className="block text-xs text-slate-500 mb-0.5">Preço unit. (€)</label>
                 <input
                   type="number" step="0.01" min="0"
                   value={item.unit_price}
@@ -712,20 +839,41 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       </div>
 
       {/* ── Total ── */}
-      <div className="bg-primary-50 border border-primary-200 rounded-xl px-6 py-4 flex justify-between items-center">
-        <span className="font-semibold text-slate-700">Total HT</span>
-        <span className="text-2xl font-bold text-primary-700">{totalHt.toFixed(2)} €</span>
-        <span className="text-sm text-slate-500 ml-2">(TVA não aplicável)</span>
+      <div className="bg-primary-50 border border-primary-200 rounded-xl px-6 py-4 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-slate-600 text-sm">Total HT</span>
+          <span className="font-semibold text-slate-800">{totalHt.toFixed(2)} €</span>
+        </div>
+        {tvaRate > 0 ? (
+          <>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-600 text-sm">TVA ({tvaRate}%)</span>
+              <span className="font-semibold text-slate-800">{totalTva.toFixed(2)} €</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-primary-200">
+              <span className="font-bold text-slate-700">Total TTC</span>
+              <span className="text-2xl font-bold text-primary-700">{totalTtc.toFixed(2)} €</span>
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-between items-center pt-2 border-t border-primary-200">
+            <span className="font-bold text-slate-700">Total</span>
+            <div className="text-right">
+              <span className="text-2xl font-bold text-primary-700">{totalHt.toFixed(2)} €</span>
+              <p className="text-xs text-slate-500 mt-0.5">TVA não aplicável (art. 293B CGI)</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ── Actions ── */}
+      {/* ── Ações ── */}
       <div className="flex gap-3">
         <button
           type="submit"
           disabled={loading}
           className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium text-sm"
         >
-          {loading ? 'Salvando...' : invoice ? 'Atualizar' : 'Criar fatura'}
+          {loading ? 'Salvando...' : invoice ? 'Atualizar fatura' : 'Criar fatura'}
         </button>
         <Link href="/invoices" className="px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
           Cancelar

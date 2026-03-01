@@ -100,15 +100,24 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <p className="flex justify-between text-slate-700">
               <span>Total HT</span><span>{Number(invoice.total_ht).toFixed(2)} €</span>
             </p>
-            {Number(invoice.total_tva) > 0 && (
-              <p className="flex justify-between text-slate-700">
-                <span>TVA</span><span>{Number(invoice.total_tva).toFixed(2)} €</span>
-              </p>
+            {Number(invoice.total_tva) > 0 ? (
+              <>
+                <p className="flex justify-between text-slate-700">
+                  <span>TVA {(invoice as { tva_rate?: number }).tva_rate ? `(${(invoice as { tva_rate?: number }).tva_rate}%)` : ''}</span>
+                  <span>{Number(invoice.total_tva).toFixed(2)} €</span>
+                </p>
+                <p className="flex justify-between font-bold text-lg text-slate-800 pt-2 border-t border-slate-300">
+                  <span>Total TTC</span><span>{Number(invoice.total_ttc).toFixed(2)} €</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="flex justify-between font-bold text-lg text-slate-800 pt-2 border-t border-slate-300">
+                  <span>Total</span><span>{Number(invoice.total_ht).toFixed(2)} €</span>
+                </p>
+                <p className="text-xs text-slate-500 pt-1">TVA non applicable, art. 293B du CGI</p>
+              </>
             )}
-            <p className="flex justify-between font-bold text-lg text-slate-800 pt-2 border-t border-slate-300">
-              <span>Total TTC</span><span>{Number(invoice.total_ttc).toFixed(2)} €</span>
-            </p>
-            <p className="text-xs text-slate-500 pt-1">TVA non applicable, art. 293B du CGI</p>
           </div>
         </div>
       </div>

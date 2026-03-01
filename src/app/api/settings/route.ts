@@ -15,14 +15,19 @@ export async function PUT(request: Request) {
 
   const { data: existing } = await supabase
     .from('company_settings')
-    .select('id')
+    .select('id, siret, company_name')
     .limit(1)
     .maybeSingle();
 
   if (existing) {
+    // Lock core identity fields once SIRET is set — requires support to change
+    const isLocked = !!(existing as { siret?: string | null }).siret;
+    const updateData = isLocked
+      ? (({ company_name: _cn, siret: _s, legal_status: _ls, ape_naf: _an, ...rest }) => rest)(parsed.data as Record<string, unknown>)
+      : parsed.data;
     const { error } = await supabase
       .from('company_settings')
-      .update(parsed.data)
+      .update(updateData)
       .eq('id', existing.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else {

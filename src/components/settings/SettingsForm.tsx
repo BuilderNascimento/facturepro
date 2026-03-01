@@ -17,6 +17,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isIdentityLocked = !!(settings?.siret);
 
   const defaultValues: CompanySettingsInput = {
     company_name: settings?.company_name ?? '',
@@ -88,24 +89,38 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
       {/* Identidade da empresa */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Identidade</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Identidade</h2>
+          {isIdentityLocked && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+              🔒 Bloqueado
+            </span>
+          )}
+        </div>
+        {isIdentityLocked && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            Os dados de identidade da empresa estão bloqueados para garantir a integridade das suas faturas.
+            Para solicitar uma alteração, contacte o suporte:{' '}
+            <a href="mailto:suporte@factureprobr.xyz" className="font-medium underline">suporte@factureprobr.xyz</a>
+          </div>
+        )}
         <div className="space-y-4">
           <div>
             <label className={L}>Nome da empresa *</label>
-            <input name="company_name" defaultValue={defaultValues.company_name} required className={F} placeholder="Ex: Limpezas Silva - EI" />
+            <input name="company_name" defaultValue={defaultValues.company_name} required disabled={isIdentityLocked} className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} placeholder="Ex: Limpezas Silva - EI" />
           </div>
           <div>
             <label className={L}>Forma jurídica</label>
-            <input name="legal_status" defaultValue={defaultValues.legal_status} placeholder="ex. Auto-entrepreneur, SARL" className={F} />
+            <input name="legal_status" defaultValue={defaultValues.legal_status} disabled={isIdentityLocked} placeholder="ex. Auto-entrepreneur, SARL" className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-1">
               <label className={L}>SIRET</label>
-              <input name="siret" defaultValue={defaultValues.siret} className={F} placeholder="14 dígitos" />
+              <input name="siret" defaultValue={defaultValues.siret} disabled={isIdentityLocked} className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} placeholder="14 dígitos" />
             </div>
             <div>
               <label className={L}>Código APE / NAF</label>
-              <input name="ape_naf" defaultValue={defaultValues.ape_naf} className={F} placeholder="ex. 8121Z" />
+              <input name="ape_naf" defaultValue={defaultValues.ape_naf} disabled={isIdentityLocked} className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} placeholder="ex. 8121Z" />
             </div>
             <div>
               <label className={L}>N° TVA intracomunitário</label>

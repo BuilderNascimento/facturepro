@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { FileText } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Row {
   id: string;
@@ -23,6 +25,13 @@ interface InvoicesTableProps {
   statusLabels: Record<string, string>;
 }
 
+const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Rascunho', cls: 'bg-slate-100 text-slate-700' },
+  { value: 'sent', label: 'Enviada', cls: 'bg-violet-100 text-violet-800' },
+  { value: 'paid', label: 'Paga', cls: 'bg-emerald-100 text-emerald-800' },
+  { value: 'overdue', label: 'Em Atraso', cls: 'bg-red-100 text-red-800' },
+];
+
 const displayStatusLabels: Record<string, string> = {
   draft: 'Rascunho',
   sent: 'Em Espera',
@@ -31,21 +40,55 @@ const displayStatusLabels: Record<string, string> = {
   echeance: 'A Vencer',
 };
 
-function statusTagClass(displayStatus: string): string {
-  switch (displayStatus) {
-    case 'overdue':
-      return 'bg-red-100 text-red-800';
-    case 'sent':
-      return 'bg-violet-100 text-violet-800';
-    case 'echeance':
-      return 'bg-amber-100 text-amber-800';
-    case 'draft':
-      return 'bg-slate-100 text-slate-700';
-    case 'paid':
-      return 'bg-emerald-100 text-emerald-800';
-    default:
-      return 'bg-slate-100 text-slate-700';
+function StatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; currentStatus: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const current = STATUS_OPTIONS.find((o) => o.value === currentStatus) ?? STATUS_OPTIONS[0];
+
+  async function changeStatus(newStatus: string) {
+    if (newStatus === currentStatus) { setOpen(false); return; }
+    setLoading(true);
+    setOpen(false);
+    await fetch(`/api/invoices/${invoiceId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    setLoading(false);
+    router.refresh();
   }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => setOpen((p) => !p)}
+        className={`text-xs px-2.5 py-1 rounded-full font-medium cursor-pointer hover:opacity-80 transition ${current.cls} ${loading ? 'opacity-50' : ''}`}
+      >
+        {loading ? '…' : (displayStatusLabels[currentStatus] ?? current.label)} ▾
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute z-20 top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]">
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => changeStatus(opt.value)}
+                className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${opt.value === currentStatus ? 'opacity-40 cursor-default' : ''}`}
+              >
+                <span className={`inline-block px-2 py-0.5 rounded-full ${opt.cls}`}>{opt.label}</span>
+                {opt.value === currentStatus && <span className="text-slate-400">✓</span>}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function InvoicesTable({ rows, statusLabels }: InvoicesTableProps) {
@@ -70,7 +113,7 @@ export function InvoicesTable({ rows, statusLabels }: InvoicesTableProps) {
           {rows.map((row) => (
             <tr key={row.id} className="hover:bg-slate-50">
               <td className="py-3 px-4">
-                <input type="checkbox" className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" aria-label={`Sélectionner ${row.reference}`} />
+                <input type="checkbox" className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" aria-label={`Selecionar ${row.reference}`} />
               </td>
               <td className="py-3 px-4">
                 <Link href={`/invoices/${row.id}`} className="inline-flex items-center gap-2">
@@ -82,9 +125,7 @@ export function InvoicesTable({ rows, statusLabels }: InvoicesTableProps) {
               </td>
               <td className="py-3 px-4 text-slate-700">{row.client}</td>
               <td className="py-3 px-4">
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusTagClass(row.displayStatus)}`}>
-                  {displayStatusLabels[row.displayStatus] ?? statusLabels[row.status]}
-                </span>
+                <StatusDropdown invoiceId={row.id} currentStatus={row.status} />
               </td>
               <td className="py-3 px-4 text-right text-slate-700">{row.total_ht.toFixed(2)} €</td>
               <td className="py-3 px-4 text-right font-medium text-slate-800">{row.total_ttc.toFixed(2)} €</td>
