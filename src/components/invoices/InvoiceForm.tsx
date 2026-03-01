@@ -409,7 +409,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               <select
                 value={directClientId}
                 onChange={(e) => setDirectClientId(e.target.value)}
-                required={mode !== 'property' || !!invoice}
+                required
                 className={INPUT}
               >
                 <option value="">Selecionar cliente</option>
