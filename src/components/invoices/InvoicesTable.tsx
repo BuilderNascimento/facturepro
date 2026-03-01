@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { FileText } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
 interface Row {
@@ -44,7 +45,21 @@ function StatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; curre
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const current = STATUS_OPTIONS.find((o) => o.value === currentStatus) ?? STATUS_OPTIONS[0];
+
+  useEffect(() => {
+    if (open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = 160;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow < menuHeight
+        ? rect.top - menuHeight + window.scrollY
+        : rect.bottom + window.scrollY + 4;
+      setMenuStyle({ position: 'fixed', top: spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom + 4, left: rect.left, zIndex: 9999 });
+    }
+  }, [open]);
 
   async function changeStatus(newStatus: string) {
     if (newStatus === currentStatus) { setOpen(false); return; }
@@ -59,9 +74,29 @@ function StatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; curre
     router.refresh();
   }
 
+  const menu = open ? (
+    <>
+      <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+      <div style={menuStyle} className="bg-white border border-slate-200 rounded-lg shadow-xl py-1 min-w-[140px]">
+        {STATUS_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => changeStatus(opt.value)}
+            className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${opt.value === currentStatus ? 'opacity-40 cursor-default' : ''}`}
+          >
+            <span className={`inline-block px-2 py-0.5 rounded-full ${opt.cls}`}>{opt.label}</span>
+            {opt.value === currentStatus && <span className="text-slate-400">✓</span>}
+          </button>
+        ))}
+      </div>
+    </>
+  ) : null;
+
   return (
-    <div className="relative">
+    <div>
       <button
+        ref={buttonRef}
         type="button"
         disabled={loading}
         onClick={() => setOpen((p) => !p)}
@@ -69,24 +104,7 @@ function StatusDropdown({ invoiceId, currentStatus }: { invoiceId: string; curre
       >
         {loading ? '…' : (displayStatusLabels[currentStatus] ?? current.label)} ▾
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute z-20 top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]">
-            {STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => changeStatus(opt.value)}
-                className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 ${opt.value === currentStatus ? 'opacity-40 cursor-default' : ''}`}
-              >
-                <span className={`inline-block px-2 py-0.5 rounded-full ${opt.cls}`}>{opt.label}</span>
-                {opt.value === currentStatus && <span className="text-slate-400">✓</span>}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      {typeof window !== 'undefined' && menu ? createPortal(menu, document.body) : null}
     </div>
   );
 }
