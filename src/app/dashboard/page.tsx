@@ -3,7 +3,7 @@ import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { RevenueLineChart } from '@/components/dashboard/RevenueLineChart';
-import { FileText, CheckCircle2 } from 'lucide-react';
+import { FileText, CheckCircle2, TrendingUp, Clock, AlertTriangle, BadgeCheck, Plus } from 'lucide-react';
 import { IS_DEMO } from '@/lib/demo/data';
 import type { Invoice } from '@/lib/types/database';
 
@@ -62,9 +62,95 @@ export default async function DashboardPage() {
     draft: 'Rascunho', sent: 'Em Espera', paid: 'Paga', overdue: 'Em Atraso',
   };
 
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const yearInvoices = invoices.filter((i) => new Date(i.issue_date).getFullYear() === currentYear);
+  const totalFaturadoHT = yearInvoices.reduce((a, i) => a + Number(i.total_ht), 0);
+  const totalFaturadoTTC = yearInvoices.reduce((a, i) => a + Number(i.total_ttc), 0);
+  const totalRecebido = yearInvoices.filter((i) => i.status === 'paid').reduce((a, i) => a + Number(i.total_ht), 0);
+  const totalPendente = yearInvoices.filter((i) => i.status === 'sent').reduce((a, i) => a + Number(i.total_ht), 0);
+  const totalEmAtraso = yearInvoices.filter((i) => i.status === 'overdue').reduce((a, i) => a + Number(i.total_ht), 0);
+  const percentPago = totalFaturadoHT > 0 ? Math.round((totalRecebido / totalFaturadoHT) * 100) : 0;
+
+  const monthName = format(new Date(currentYear, currentMonth), 'MMMM yyyy', { locale: fr });
+
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-800">Início</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Início</h1>
+          <p className="text-sm text-slate-500 mt-0.5 capitalize">{monthName}</p>
+        </div>
+        <Link
+          href="/invoices/new"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl font-semibold text-sm hover:bg-primary-700 shadow-md shadow-primary-200 transition"
+        >
+          <Plus className="w-4 h-4" />
+          Fazer fatura
+        </Link>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="p-2 rounded-lg bg-primary-50"><TrendingUp className="w-4 h-4 text-primary-600" /></span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Faturado {currentYear}</span>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{totalFaturadoHT.toFixed(0)} €</p>
+          <p className="text-xs text-slate-400 mt-0.5">TTC: {totalFaturadoTTC.toFixed(0)} €</p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-emerald-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="p-2 rounded-lg bg-emerald-50"><BadgeCheck className="w-4 h-4 text-emerald-600" /></span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Recebido</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-700">{totalRecebido.toFixed(0)} €</p>
+          <p className="text-xs text-emerald-600 mt-0.5 font-medium">{percentPago}% do total</p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-violet-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="p-2 rounded-lg bg-violet-50"><Clock className="w-4 h-4 text-violet-600" /></span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Pendente</span>
+          </div>
+          <p className="text-2xl font-bold text-violet-700">{totalPendente.toFixed(0)} €</p>
+          <p className="text-xs text-slate-400 mt-0.5">{sentInvoices.length} fatura{sentInvoices.length !== 1 ? 's' : ''} enviada{sentInvoices.length !== 1 ? 's' : ''}</p>
+        </div>
+
+        <div className={`bg-white rounded-xl border shadow-sm p-5 ${totalEmAtraso > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'}`}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`p-2 rounded-lg ${totalEmAtraso > 0 ? 'bg-red-100' : 'bg-slate-50'}`}>
+              <AlertTriangle className={`w-4 h-4 ${totalEmAtraso > 0 ? 'text-red-600' : 'text-slate-400'}`} />
+            </span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Em Atraso</span>
+          </div>
+          <p className={`text-2xl font-bold ${totalEmAtraso > 0 ? 'text-red-700' : 'text-slate-400'}`}>{totalEmAtraso.toFixed(0)} €</p>
+          <p className="text-xs text-slate-400 mt-0.5">{overdueInvoices.length} fatura{overdueInvoices.length !== 1 ? 's' : ''}</p>
+        </div>
+      </div>
+
+      {/* Barra de progresso pago vs pendente */}
+      {totalFaturadoHT > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-slate-600">Progresso de recebimentos {currentYear}</span>
+            <span className="text-sm font-bold text-slate-700">{percentPago}% recebido</span>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-3">
+            <div
+              className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-3 rounded-full transition-all"
+              style={{ width: `${percentPago}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-slate-400 mt-1.5">
+            <span>Recebido: {totalRecebido.toFixed(2)} €</span>
+            <span>Total: {totalFaturadoHT.toFixed(2)} €</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -111,7 +197,7 @@ export default async function DashboardPage() {
                 <span className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-600">
                   <FileText className="w-5 h-5" />
                 </span>
-                <CardTitle className="text-base">Factures</CardTitle>
+                <CardTitle className="text-base">Faturas</CardTitle>
               </div>
               <Link href="/invoices/new" className="text-sm font-medium text-primary-600 hover:underline">
                 + Nova fatura

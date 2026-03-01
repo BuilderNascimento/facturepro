@@ -61,6 +61,22 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       legal_text_default: formData.get('legal_text_default') || undefined,
       indemnity_text_default: formData.get('indemnity_text_default') || undefined,
     };
+    // Validar SIRET: exatamente 14 dígitos (ignorando espaços)
+    const siretVal = (raw.siret as string | undefined ?? '').replace(/\s/g, '');
+    if (siretVal && !/^\d{14}$/.test(siretVal)) {
+      setError('SIRET inválido: deve ter exatamente 14 dígitos.');
+      setLoading(false);
+      return;
+    }
+
+    // Validar N° TVA intracomunitário (formato: FR + 2 chars + 9 dígitos)
+    const vatVal = (raw.vat_number as string | undefined ?? '').replace(/\s/g, '');
+    if (vatVal && !/^FR[A-Z0-9]{2}\d{9}$/.test(vatVal)) {
+      setError('N° TVA inválido: formato esperado FR00000000000 (FR + 2 caracteres + 9 dígitos).');
+      setLoading(false);
+      return;
+    }
+
     const parsed = companySettingsSchema.safeParse(raw);
     if (!parsed.success) {
       setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
@@ -115,12 +131,14 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-1">
-              <label className={L}>SIRET</label>
-              <input name="siret" defaultValue={defaultValues.siret} disabled={isIdentityLocked} className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} placeholder="14 dígitos" />
+              <label className={L}>SIRET <span className="text-slate-400 font-normal text-xs">(14 dígitos)</span></label>
+              <input name="siret" defaultValue={defaultValues.siret} disabled={isIdentityLocked} className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} placeholder="Ex: 99402464400019" maxLength={14} />
+              {!isIdentityLocked && <p className="text-xs text-slate-400 mt-1">Número de identificação da sua empresa junto ao INSEE.</p>}
             </div>
             <div>
-              <label className={L}>Código APE / NAF</label>
+              <label className={L}>Código APE / NAF <span className="text-slate-400 font-normal text-xs">(atividade)</span></label>
               <input name="ape_naf" defaultValue={defaultValues.ape_naf} disabled={isIdentityLocked} className={`${F} ${isIdentityLocked ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`} placeholder="ex. 8121Z" />
+              {!isIdentityLocked && <p className="text-xs text-slate-400 mt-1">Código que identifica a sua atividade económica (ex: 8121Z = limpeza). Aparece na fatura.</p>}
             </div>
             <div>
               <label className={L}>N° TVA intracomunitário</label>

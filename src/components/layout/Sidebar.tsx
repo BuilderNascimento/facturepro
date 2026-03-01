@@ -85,6 +85,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-1">
+        <div className="px-4 py-2 mb-1">
+          <p className="text-xs text-white/50 leading-relaxed">
+            🇫🇷 Faturamento conforme legislação francesa · Dados isolados e protegidos
+          </p>
+        </div>
         <a
           href="mailto:suporte@factureprobr.xyz"
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-cyan-200 hover:bg-white/10 transition text-sm"

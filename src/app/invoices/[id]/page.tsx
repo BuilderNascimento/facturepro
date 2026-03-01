@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 import { InvoiceActions } from '@/components/invoices/InvoiceActions';
+import { DuplicateButton } from '@/components/invoices/DuplicateButton';
 import { IS_DEMO } from '@/lib/demo/data';
 
 const statusLabels: Record<string, string> = {
@@ -122,12 +123,29 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Link href={`/invoices/${id}/edit`} className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-          Editar
-        </Link>
-        <Link href="/invoices" className="text-primary-600 hover:underline text-sm">
-          Voltar à lista
+      {invoice.status !== 'draft' && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+          <span className="text-lg shrink-0">⚠️</span>
+          <div>
+            <p className="font-semibold">Fatura emitida — não pode ser alterada</p>
+            <p className="text-amber-700 mt-0.5">Conforme a legislação francesa, faturas enviadas ou pagas não podem ser modificadas. Para corrigir, crie uma nota de crédito ou duplique a fatura.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3">
+        {invoice.status === 'draft' ? (
+          <Link href={`/invoices/${id}/edit`} className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium">
+            ✏️ Editar rascunho
+          </Link>
+        ) : (
+          <span className="px-4 py-2 border border-slate-200 rounded-lg text-slate-400 text-sm cursor-not-allowed bg-slate-50">
+            🔒 Edição bloqueada
+          </span>
+        )}
+        <DuplicateButton invoiceId={id} />
+        <Link href="/invoices" className="px-4 py-2 text-slate-500 hover:text-slate-700 text-sm">
+          ← Voltar à lista
         </Link>
       </div>
     </div>

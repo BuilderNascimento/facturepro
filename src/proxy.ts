@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const protectedPaths = ['/dashboard', '/clients', '/services', '/invoices', '/settings', '/properties'];
-const publicPaths = ['/', '/register', '/login', '/subscribe', '/payment-success'];
+const publicPaths = ['/', '/register', '/login', '/subscribe', '/payment-success', '/billing-issue'];
 
 function isProtected(pathname: string) {
   return protectedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
@@ -94,7 +94,8 @@ export async function proxy(request: NextRequest) {
 
       if (!isActive) {
         const url = request.nextUrl.clone();
-        url.pathname = '/subscribe';
+        // past_due gets a friendlier screen
+        url.pathname = sub?.status === 'past_due' ? '/billing-issue' : '/subscribe';
         return NextResponse.redirect(url);
       }
     }
