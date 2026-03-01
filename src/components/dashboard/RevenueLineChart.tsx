@@ -30,7 +30,7 @@ export function RevenueLineChart({ data, year }: RevenueLineChartProps) {
             labelFormatter={(label) => label}
           />
           <Legend
-            formatter={(value) => (value === 'exerciceEnCours' ? `Exercice ${year}` : `Exercice ${year - 1}`)}
+            formatter={(value) => (value === 'exerciceEnCours' ? `Ano ${year}` : `Ano ${year - 1}`)}
           />
           <Line
             type="monotone"

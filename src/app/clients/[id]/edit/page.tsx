@@ -20,7 +20,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
   if (!client) notFound();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Modifier le client</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Editar cliente</h1>
       <ClientForm client={client} />
     </div>
   );

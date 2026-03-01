@@ -30,7 +30,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
   if (!data) notFound();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Modifier l'appartement</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Editar local</h1>
       <PropertyForm property={data.property} clients={data.clients} />
     </div>
   );

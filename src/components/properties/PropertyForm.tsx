@@ -32,7 +32,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
     };
     const parsed = propertySchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
+      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
       setLoading(false);
       return;
     }
@@ -44,7 +44,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? 'Erreur serveur');
+      setError(data.error ?? 'Erro no servidor');
       return;
     }
     router.push('/properties');
@@ -59,15 +59,15 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Propriétaire *</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Cliente *</label>
           {clients.length === 0 ? (
             <p className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
-              Aucun client trouvé.{' '}
-              <Link href="/clients/new" className="underline font-medium">Créer un client d'abord</Link>.
+              Nenhum cliente encontrado.{' '}
+              <Link href="/clients/new" className="underline font-medium">Criar um cliente primeiro</Link>.
             </p>
           ) : (
             <select name="client_id" defaultValue={property?.client_id ?? ''} required className={field}>
-              <option value="">Sélectionner le propriétaire</option>
+              <option value="">Selecionar cliente</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.company_name}{c.contact_name ? ` — ${c.contact_name}` : ''}
@@ -78,17 +78,17 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nom de l'appartement *</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Nome do local *</label>
           <input name="name" defaultValue={property?.name ?? ''} required className={field} placeholder="Ex: Appt 3B Rue Victor Hugo" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Adresse de l'appartement</label>
-          <input name="address" defaultValue={property?.address ?? ''} className={field} placeholder="Rue, ville, code postal" />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Endereço do local</label>
+          <input name="address" defaultValue={property?.address ?? ''} className={field} placeholder="Rua, cidade, código postal" />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Prix nettoyage normal (€) *
+            Valor limpeza normal (€) *
           </label>
           <div className="relative">
             <input
@@ -106,7 +106,7 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Prix nettoyage extra (€)
+            Valor limpeza extra (€)
           </label>
           <div className="relative">
             <input
@@ -123,17 +123,17 @@ export function PropertyForm({ property, clients }: PropertyFormProps) {
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-          <textarea name="notes" rows={2} defaultValue={property?.notes ?? ''} className={field} placeholder="Informations d'accès, notes diverses…" />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Notas</label>
+          <textarea name="notes" rows={2} defaultValue={property?.notes ?? ''} className={field} placeholder="Informações de acesso, notas diversas…" />
         </div>
       </div>
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={loading || clients.length === 0} className="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm font-medium">
-          {loading ? 'Enregistrement...' : property ? 'Mettre à jour' : 'Créer l\'appartement'}
+          {loading ? 'Salvando...' : property ? 'Atualizar' : 'Criar local'}
         </button>
         <Link href="/properties" className="px-5 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-          Annuler
+          Cancelar
         </Link>
       </div>
     </form>

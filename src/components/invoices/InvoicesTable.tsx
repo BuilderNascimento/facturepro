@@ -24,11 +24,11 @@ interface InvoicesTableProps {
 }
 
 const displayStatusLabels: Record<string, string> = {
-  draft: 'Brouillon',
-  sent: 'En Attente',
-  paid: 'Payée',
-  overdue: 'En Retard',
-  echeance: 'À Échéance',
+  draft: 'Rascunho',
+  sent: 'Em Espera',
+  paid: 'Paga',
+  overdue: 'Em Atraso',
+  echeance: 'A Vencer',
 };
 
 function statusTagClass(displayStatus: string): string {
@@ -55,14 +55,14 @@ export function InvoicesTable({ rows, statusLabels }: InvoicesTableProps) {
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
             <th className="text-left py-3 px-4 w-10">
-              <input type="checkbox" className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" aria-label="Tout sélectionner" />
+              <input type="checkbox" className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" aria-label="Selecionar todos" />
             </th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Référence</th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Client</th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Statut</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Referência</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Cliente</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Estado</th>
             <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Total HT</th>
             <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Total TTC</th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Émission</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Emissão</th>
             <th className="w-10"></th>
           </tr>
         </thead>
@@ -97,7 +97,7 @@ export function InvoicesTable({ rows, statusLabels }: InvoicesTableProps) {
                   className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
                 >
                   <FileText className="w-4 h-4" />
-                  Voir
+                  Ver
                 </Link>
               </td>
             </tr>

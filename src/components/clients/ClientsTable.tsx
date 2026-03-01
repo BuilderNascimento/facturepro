@@ -23,11 +23,11 @@ export function ClientsTable({ rows }: ClientsTableProps) {
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
             <th className="text-left py-3 px-4 w-10">
-              <input type="checkbox" className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" aria-label="Tout sélectionner" />
+              <input type="checkbox" className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" aria-label="Selecionar todos" />
             </th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Nom</th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Référence</th>
-            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Téléphone</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Nome</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Referência</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Telefone</th>
             <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Email</th>
             <th className="w-20"></th>
           </tr>
@@ -59,7 +59,7 @@ export function ClientsTable({ rows }: ClientsTableProps) {
                   href={`/clients/${row.id}/edit`}
                   className="text-sm text-primary-600 hover:underline"
                 >
-                  Modifier
+                  Editar
                 </Link>
               </td>
             </tr>

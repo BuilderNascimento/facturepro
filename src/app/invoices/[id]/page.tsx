@@ -6,7 +6,7 @@ import { InvoiceActions } from '@/components/invoices/InvoiceActions';
 import { IS_DEMO } from '@/lib/demo/data';
 
 const statusLabels: Record<string, string> = {
-  draft: 'Brouillon', sent: 'Envoyée', paid: 'Payée', overdue: 'En retard',
+  draft: 'Rascunho', sent: 'Enviada', paid: 'Paga', overdue: 'Em Atraso',
 };
 
 async function getInvoice(id: string) {
@@ -63,7 +63,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             {statusLabels[invoice.status]}
           </span>
           <span className="text-slate-600">
-            Échéance : {format(new Date(invoice.due_date), 'd MMMM yyyy', { locale: fr })}
+            Vencimento: {format(new Date(invoice.due_date), 'd MMMM yyyy', { locale: fr })}
           </span>
         </div>
         <div className="p-6">
@@ -78,8 +78,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <thead className="bg-slate-50 border-y border-slate-200">
               <tr>
                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-600">Description</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Quantité</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Prix unitaire</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Quantidade</th>
+                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Preço unitário</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-600">Total</th>
               </tr>
             </thead>
@@ -115,10 +115,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
       <div className="flex gap-3">
         <Link href={`/invoices/${id}/edit`} className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-          Modifier
+          Editar
         </Link>
         <Link href="/invoices" className="text-primary-600 hover:underline text-sm">
-          Retour à la liste
+          Voltar à lista
         </Link>
       </div>
     </div>

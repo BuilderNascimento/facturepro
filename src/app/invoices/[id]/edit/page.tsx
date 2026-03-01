@@ -60,7 +60,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
   if (!data) notFound();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Modifier la facture {data.invoice.invoice_number}</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Editar fatura {data.invoice.invoice_number}</h1>
       <InvoiceForm invoice={data.invoice} clients={data.clients as never} properties={data.properties as never} />
     </div>
   );

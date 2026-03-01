@@ -17,7 +17,7 @@ export default async function NewPropertyPage() {
   const clients = await getClients();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Nouvel appartement</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Novo local</h1>
       <PropertyForm clients={clients} />
     </div>
   );

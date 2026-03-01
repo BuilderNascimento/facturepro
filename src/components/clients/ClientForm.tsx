@@ -33,7 +33,7 @@ export function ClientForm({ client }: ClientFormProps) {
     };
     const parsed = clientSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.errors[0]?.message ?? 'Données invalides');
+      setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
       setLoading(false);
       return;
     }
@@ -45,7 +45,7 @@ export function ClientForm({ client }: ClientFormProps) {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? 'Erreur serveur');
+      setError(data.error ?? 'Erro no servidor');
       return;
     }
     router.push('/clients');
@@ -60,45 +60,45 @@ export function ClientForm({ client }: ClientFormProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nom / Prénom du propriétaire *</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Nome / Empresa do cliente *</label>
           <input name="company_name" defaultValue={client?.company_name ?? ''} required className={field} placeholder="Ex: Dupont Jean" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Contact (mandataire, agence…)</label>
-          <input name="contact_name" defaultValue={client?.contact_name ?? ''} className={field} placeholder="Nom du contact" />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Contacto (mandatário, agência…)</label>
+          <input name="contact_name" defaultValue={client?.contact_name ?? ''} className={field} placeholder="Nome do contacto" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Telefone</label>
           <input name="phone" defaultValue={client?.phone ?? ''} className={field} placeholder="+33 6 00 00 00 00" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-          <input name="email" type="email" defaultValue={client?.email ?? ''} className={field} placeholder="email@exemple.com" />
+          <input name="email" type="email" defaultValue={client?.email ?? ''} className={field} placeholder="email@exemplo.com" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">SIRET</label>
-          <input name="siret" defaultValue={client?.siret ?? ''} className={field} placeholder="14 chiffres" />
+          <input name="siret" defaultValue={client?.siret ?? ''} className={field} placeholder="14 dígitos" />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Adresse</label>
-          <textarea name="address" rows={2} defaultValue={client?.address ?? ''} className={field} placeholder="Rue, ville, code postal" />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
+          <textarea name="address" rows={2} defaultValue={client?.address ?? ''} className={field} placeholder="Rua, cidade, código postal" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">N° TVA</label>
           <input name="vat_number" defaultValue={client?.vat_number ?? ''} className={field} />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes internes</label>
-          <textarea name="notes" rows={2} defaultValue={client?.notes ?? ''} className={field} placeholder="Informations complémentaires, observations…" />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Notas internas</label>
+          <textarea name="notes" rows={2} defaultValue={client?.notes ?? ''} className={field} placeholder="Informações complementares, observações…" />
         </div>
       </div>
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={loading} className="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm font-medium">
-          {loading ? 'Enregistrement...' : client ? 'Mettre à jour' : 'Créer le client'}
+          {loading ? 'Salvando...' : client ? 'Atualizar' : 'Criar cliente'}
         </button>
         <Link href="/clients" className="px-5 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 text-sm">
-          Annuler
+          Cancelar
         </Link>
       </div>
     </form>

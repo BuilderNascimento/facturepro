@@ -28,12 +28,12 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Clients</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
       <ClientsFilters />
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {!rows.length ? (
           <div className="p-12 text-center text-slate-500">
-            Aucun client. <Link href="/clients/new" className="text-primary-600 hover:underline">Ajouter un client</Link>
+            Nenhum cliente. <Link href="/clients/new" className="text-primary-600 hover:underline">Adicionar cliente</Link>
           </div>
         ) : (
           <ClientsTable rows={rows} />
