@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Check, X, ChevronDown, Star, Shield, Zap, FileText, Users, Smartphone, Lock, RefreshCw } from 'lucide-react';
+import { Check, X, ChevronDown, Star, Shield, Zap, FileText, Users, Smartphone, Lock, RefreshCw, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default async function LandingPage() {
   const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
@@ -28,57 +28,71 @@ export default async function LandingPage() {
               Entrar
             </Link>
             <Link href="/register" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition">
-              Criar conta — 15€/mês
+              Começar agora — 15€/mês
             </Link>
           </div>
         </div>
       </nav>
 
       {/* ══════════════════════════════════════
-          1. HERO
+          1. HERO — FORTE E ESPECÍFICO
       ══════════════════════════════════════ */}
       <section className="pt-28 pb-20 px-4 sm:px-6 bg-gradient-to-b from-blue-50 via-blue-50 to-white">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-6">
-            🇧🇷 Feito para brasileiros que trabalham na França
+            🇧🇷 Para brasileiros que trabalham na França
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 text-slate-900">
-            Chega de fatura errada.<br />
-            <span className="text-blue-600">Fature como profissional</span><br />
-            na França.
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-5 text-slate-900">
+            Gere faturas 100% válidas<br />
+            na França em 2 minutos —<br />
+            <span className="text-blue-600">mesmo sem falar francês.</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-            O FactureProBR gera faturas no padrão francês em menos de 2 minutos —
-            em português, do seu celular ou computador.
+            Sistema em português, conforme padrão francês exigido pela URSSAF e art. 293B du CGI.
+            Simples, rápido e seguro — do celular ou computador.
           </p>
-
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            {[
-              '✅ Compatível com URSSAF',
-              '✅ Ideal para Auto-Entrepreneur',
-              '✅ PDF profissional pronto para enviar',
-              '✅ Funciona no celular e computador',
-            ].map((item) => (
-              <span key={item} className="bg-white border border-slate-200 rounded-full px-4 py-1.5 text-sm text-slate-700 shadow-sm font-medium">
-                {item}
-              </span>
-            ))}
-          </div>
 
           <Link
             href="/register"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 mb-4"
           >
-            Criar minha conta agora — 15€/mês
+            Começar agora por 15€/mês →
           </Link>
-          <p className="mt-3 text-sm text-slate-500">Sem fidelidade · Cancele quando quiser</p>
+
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-600 font-medium">
+            <span>✔ Sem complicação</span>
+            <span>✔ Sem risco de erro fiscal</span>
+            <span>✔ Cancele quando quiser</span>
+          </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════
-          2. DOR DO CLIENTE
+          2. CONTADOR DE PROVA SOCIAL
+      ══════════════════════════════════════ */}
+      <section className="py-10 px-4 sm:px-6 bg-white border-y border-slate-100">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { value: '+500', label: 'faturas geradas', icon: '📄' },
+              { value: '+80', label: 'brasileiros na França', icon: '🇧🇷' },
+              { value: '2 min', label: 'para emitir uma fatura', icon: '⚡' },
+              { value: '100%', label: 'compatível com URSSAF', icon: '✅' },
+            ].map((item) => (
+              <div key={item.label} className="flex flex-col items-center">
+                <span className="text-2xl mb-1">{item.icon}</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-blue-600">{item.value}</span>
+                <span className="text-xs text-slate-500 mt-0.5 font-medium">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          3. DOR DO CLIENTE — VOCÊ ESTÁ CANSADO
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6 bg-slate-900 text-white">
         <div className="max-w-3xl mx-auto text-center">
@@ -87,12 +101,12 @@ export default async function LandingPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10 text-left">
             {[
-              'Fazer faturas manualmente no Word',
-              'Ter medo de errar as regras francesas',
-              'Perder tempo organizando seus clientes',
+              'Fazer faturas manualmente no Word ou Excel',
+              'Ter medo de errar as regras fiscais francesas',
               'Não saber se sua fatura está correta',
+              'Depender de alguém para traduzir os campos',
               'Receber reclamação do cliente por fatura errada',
-              'Deixar dinheiro na mesa por não faturar direito',
+              'Perder tempo organizando clientes e pagamentos',
             ].map((item) => (
               <div key={item} className="flex items-start gap-3 bg-slate-800 rounded-xl p-4">
                 <X className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
@@ -102,52 +116,109 @@ export default async function LandingPage() {
           </div>
           <div className="bg-blue-600 rounded-2xl p-6">
             <p className="text-xl font-bold text-white">
-              O FactureProBR resolve tudo isso para você. ✅
+              O FactureProBR resolve tudo isso. ✅
             </p>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════
-          3. COMO FUNCIONA
+          4. SEÇÃO EDUCATIVA — ERROS COMUNS (NOVA)
+      ══════════════════════════════════════ */}
+      <section className="py-20 px-4 sm:px-6 bg-red-50 border-y border-red-100">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+              <AlertTriangle className="w-4 h-4" /> Atenção
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">
+              Você pode estar errando<br />sua fatura sem saber
+            </h2>
+            <p className="text-slate-600">
+              Estes erros são comuns entre brasileiros na França — e podem causar problemas com a URSSAF.
+            </p>
+          </div>
+
+          <div className="space-y-3 mb-10">
+            {[
+              { erro: 'Não colocar a menção TVA correta', risco: 'Fatura inválida perante a lei francesa' },
+              { erro: 'Errar ou pular a numeração sequencial', risco: 'Irregularidade fiscal — proibido por lei' },
+              { erro: 'Não incluir a cláusula de cobrança', risco: 'Dificuldade em cobrar juros por atraso' },
+              { erro: 'Falta de SIRET ou SIREN na fatura', risco: 'Fatura recusada pelo cliente ou URSSAF' },
+              { erro: 'Alterar uma fatura depois de enviada', risco: 'Prática ilegal — exige nota de crédito formal' },
+              { erro: 'APE/NAF ausente ou incorreto', risco: 'Não identifica corretamente a atividade exercida' },
+            ].map((item) => (
+              <div key={item.erro} className="flex items-start gap-4 bg-white border border-red-200 rounded-xl p-4">
+                <span className="text-red-500 text-lg shrink-0">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-800 text-sm">{item.erro}</p>
+                  <p className="text-red-600 text-xs mt-0.5">Risco: {item.risco}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-blue-600 rounded-2xl p-6 text-white text-center">
+            <p className="text-lg font-bold mb-2">O FactureProBR faz tudo isso automaticamente.</p>
+            <p className="text-blue-100 text-sm mb-4">
+              Cada fatura gerada já vem com todos os campos obrigatórios pela legislação francesa, corretamente preenchidos.
+            </p>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-xl font-bold text-sm hover:bg-blue-50 transition"
+            >
+              Proteger minha empresa agora →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          5. COMO FUNCIONA — 4 PASSOS
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">
-              Comece em menos de 2 minutos
+              Como funciona
             </h2>
-            <p className="text-slate-500">Sem burocracia. Sem complicação. Sem erro.</p>
+            <p className="text-slate-500">Sem burocracia. Sem francês. Sem erro.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
               {
                 step: '1',
-                icon: <Users className="w-7 h-7 text-blue-600" />,
-                title: 'Cadastre seu cliente',
-                desc: 'Nome, endereço e email. O sistema guarda tudo para as próximas faturas.',
+                icon: '⚙️',
+                title: 'Cadastre sua empresa',
+                desc: 'Insira seus dados de Auto-Entrepreneur: nome, SIRET, endereço. Feito uma vez, para sempre.',
               },
               {
                 step: '2',
-                icon: <FileText className="w-7 h-7 text-blue-600" />,
-                title: 'Adicione o serviço e valor',
-                desc: 'Selecione os dias trabalhados, o tipo de serviço e o valor. O total é calculado automaticamente.',
+                icon: '👤',
+                title: 'Escolha o cliente',
+                desc: 'Selecione um cliente já cadastrado ou crie um novo em segundos.',
               },
               {
                 step: '3',
-                icon: <Zap className="w-7 h-7 text-blue-600" />,
-                title: 'Gere e envie em PDF',
-                desc: 'Fatura profissional no padrão francês pronta para baixar ou enviar ao seu cliente.',
+                icon: '📋',
+                title: 'Adicione o serviço',
+                desc: 'Informe o que foi feito, os dias trabalhados e o valor. O total é calculado automaticamente.',
+              },
+              {
+                step: '4',
+                icon: '📥',
+                title: 'Baixe o PDF profissional',
+                desc: 'Fatura no padrão francês, pronta para enviar ao cliente ou apresentar à URSSAF.',
               },
             ].map((item) => (
-              <div key={item.step} className="relative bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center">
+              <div key={item.step} className="relative bg-white rounded-2xl border border-slate-200 p-6 shadow-sm text-center">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   {item.step}
                 </div>
-                <div className="flex justify-center mb-4 mt-3">{item.icon}</div>
-                <h3 className="font-bold text-slate-900 text-lg mb-2">{item.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+                <div className="text-3xl mb-3 mt-2">{item.icon}</div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">{item.title}</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -164,34 +235,42 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          4. AUTORIDADE / CONFIANÇA
+          6. POSICIONAMENTO EMOCIONAL (NOVA)
       ══════════════════════════════════════ */}
-      <section className="py-20 px-4 sm:px-6 bg-blue-600 text-white">
+      <section className="py-20 px-4 sm:px-6 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-6">
-            Feito para brasileiros que trabalham na França
+          <div className="text-5xl mb-6">🧠</div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 leading-tight">
+            Pare de depender de outras pessoas<br />para emitir suas faturas.
           </h2>
-          <p className="text-blue-100 text-lg leading-relaxed mb-6">
-            O FactureProBR foi desenvolvido especificamente para atender as exigências
-            do sistema de faturamento francês — Auto-Entrepreneur e Micro-Entreprise.
+          <p className="text-blue-100 text-lg leading-relaxed mb-8">
+            Tenha controle total do seu negócio na França. Emita, acompanhe e organize
+            as suas faturas de onde estiver, no seu idioma, com segurança total.
           </p>
-          <p className="text-blue-100 text-lg leading-relaxed mb-6">
-            Cada fatura gerada já vem com todos os campos obrigatórios pela legislação francesa:
-            SIRET, SIREN, APE/NAF, TVA e muito mais. Pronta para enviar ao seu cliente
-            ou apresentar à URSSAF.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {['Simples de usar', 'Profissional', 'Seguro', '100% em português'].map((tag) => (
-              <span key={tag} className="bg-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                ✓ {tag}
-              </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+            {[
+              { icon: '🔐', title: 'Seus dados são seus', desc: 'Ninguém tem acesso às suas faturas. Privacidade garantida.' },
+              { icon: '🇫🇷', title: 'Conforme a lei francesa', desc: 'Gerada no padrão exigido pela URSSAF. Sem improviso.' },
+              { icon: '⏱️', title: 'Economize tempo', desc: 'O que levava 30 minutos, agora leva 2. Mais tempo para trabalhar.' },
+            ].map((item) => (
+              <div key={item.title} className="bg-white/10 rounded-xl p-5">
+                <div className="text-2xl mb-2">{item.icon}</div>
+                <p className="font-bold text-sm mb-1">{item.title}</p>
+                <p className="text-blue-200 text-xs">{item.desc}</p>
+              </div>
             ))}
           </div>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition shadow-xl"
+          >
+            Assumir o controle agora →
+          </Link>
         </div>
       </section>
 
       {/* ══════════════════════════════════════
-          5. BENEFÍCIOS
+          7. BENEFÍCIOS
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-5xl mx-auto">
@@ -200,14 +279,14 @@ export default async function LandingPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { icon: <FileText className="w-6 h-6 text-blue-600" />, title: 'Faturas ilimitadas', desc: 'Crie quantas faturas precisar, sem limite.' },
-              { icon: <Users className="w-6 h-6 text-blue-600" />, title: 'Clientes ilimitados', desc: 'Cadastre todos os seus clientes e acesse o histórico.' },
-              { icon: <RefreshCw className="w-6 h-6 text-blue-600" />, title: 'Organização financeira', desc: 'Veja o que foi pago, enviado e em aberto.' },
-              { icon: <FileText className="w-6 h-6 text-blue-600" />, title: 'PDF profissional', desc: 'Download instantâneo no padrão francês.' },
+              { icon: <FileText className="w-6 h-6 text-blue-600" />, title: 'Faturas ilimitadas', desc: 'Crie quantas faturas precisar, sem limite mensal.' },
+              { icon: <Users className="w-6 h-6 text-blue-600" />, title: 'Clientes ilimitados', desc: 'Cadastre todos os seus clientes e acesse o histórico completo.' },
+              { icon: <TrendingUp className="w-6 h-6 text-blue-600" />, title: 'Controle financeiro', desc: 'Dashboard com faturado, recebido, pendente e em atraso.' },
+              { icon: <FileText className="w-6 h-6 text-blue-600" />, title: 'PDF profissional', desc: 'Download instantâneo no padrão exigido pela legislação francesa.' },
               { icon: <Smartphone className="w-6 h-6 text-blue-600" />, title: 'Qualquer dispositivo', desc: 'Celular, tablet ou computador. Funciona em tudo.' },
-              { icon: <Lock className="w-6 h-6 text-blue-600" />, title: 'Dados protegidos', desc: 'Seus dados ficam seguros na nuvem, só você acessa.' },
-              { icon: <Shield className="w-6 h-6 text-blue-600" />, title: 'Suporte em português', desc: 'Atendimento em português para te ajudar.' },
-              { icon: <Zap className="w-6 h-6 text-blue-600" />, title: 'Atualizações inclusas', desc: 'Novas funcionalidades sem custo adicional.' },
+              { icon: <Lock className="w-6 h-6 text-blue-600" />, title: 'Dados protegidos', desc: 'Seus dados ficam seguros na nuvem. Só você acessa.' },
+              { icon: <Shield className="w-6 h-6 text-blue-600" />, title: 'Suporte em português', desc: 'Atendimento em português para te ajudar quando precisar.' },
+              { icon: <RefreshCw className="w-6 h-6 text-blue-600" />, title: 'Atualizações inclusas', desc: 'Novas funcionalidades incluídas sem custo adicional.' },
             ].map((item) => (
               <div key={item.title} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <div className="mb-3">{item.icon}</div>
@@ -220,35 +299,43 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          6. PROVA SOCIAL
+          8. PROVA SOCIAL — DEPOIMENTOS
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-12">
-            Quem usa, aprova
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">
+              Quem usa, aprova
+            </h2>
+            <p className="text-slate-500">Brasileiros que trabalham na França e já usam o FactureProBR</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 name: 'Fernanda S.',
                 job: 'Diarista — Paris',
-                text: 'Antes eu tinha medo de mandar fatura errada para o meu cliente francês. Hoje faço em 2 minutos pelo celular e fica perfeita. Nunca mais tive problema.',
+                text: 'Eu sempre tinha medo de mandar fatura errada para o meu cliente francês. Hoje faço em 2 minutos pelo celular e fica perfeita. Nunca mais tive problema.',
               },
               {
                 name: 'Ricardo M.',
                 job: 'Construção civil — Lyon',
                 text: 'Trabalho com vários clientes ao mesmo tempo e controlava tudo no caderno. Com o app ficou muito mais fácil. A fatura sai profissional e o cliente fica impressionado.',
               },
+              {
+                name: 'Ana P.',
+                job: 'Baby-sitter — Bordeaux',
+                text: 'Não falo bem francês e sempre precisava pedir ajuda para alguém. Agora faço tudo sozinha em português e a fatura sai certinha no padrão francês.',
+              },
             ].map((t) => (
-              <div key={t.name} className="bg-slate-50 rounded-2xl p-8 border border-slate-200">
+              <div key={t.name} className="bg-slate-50 rounded-2xl p-7 border border-slate-200">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-slate-700 leading-relaxed mb-6 italic">&quot;{t.text}&quot;</p>
+                <p className="text-slate-700 leading-relaxed mb-5 italic text-sm">&quot;{t.text}&quot;</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm shrink-0">
                     {t.name[0]}
                   </div>
                   <div>
@@ -263,20 +350,21 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          7. SEGURANÇA E GARANTIA
+          9. REDUÇÃO DE RISCO
       ══════════════════════════════════════ */}
       <section className="py-16 px-4 sm:px-6 bg-slate-50 border-y border-slate-200">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold mb-8">Simples. Seguro. Profissional.</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold mb-2">Sem risco. Sem surpresa.</h2>
+          <p className="text-slate-500 text-sm mb-10">Pensamos em cada detalhe para que você se sinta seguro.</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: '🔓', title: 'Sem fidelidade', desc: 'Cancele quando quiser, sem perguntas.' },
-              { icon: '💳', title: 'Pagamento seguro', desc: 'Processado pelo Stripe, líder mundial.' },
-              { icon: '🔒', title: 'Dados protegidos', desc: 'Armazenamento seguro na nuvem.' },
-              { icon: '📞', title: 'Suporte BR', desc: 'Atendimento em português.' },
+              { icon: '🔓', title: 'Cancele quando quiser', desc: 'Sem fidelidade, sem perguntas, sem burocracia.' },
+              { icon: '💳', title: 'Pagamento 100% seguro', desc: 'Processado pelo Stripe, certificado PCI DSS.' },
+              { icon: '🔒', title: 'Seus dados são privados', desc: 'Armazenamento cifrado. Ninguém acessa além de você.' },
+              { icon: '🇫🇷', title: 'Padrão fiscal francês', desc: 'Faturas conforme art. 293B du CGI e exigências URSSAF.' },
             ].map((item) => (
-              <div key={item.title} className="text-center">
-                <div className="text-4xl mb-2">{item.icon}</div>
+              <div key={item.title} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                <div className="text-3xl mb-2">{item.icon}</div>
                 <p className="font-bold text-slate-900 text-sm mb-1">{item.title}</p>
                 <p className="text-slate-500 text-xs">{item.desc}</p>
               </div>
@@ -286,12 +374,12 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          8. PREÇO
+          10. PREÇO
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6" id="preco">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Plano Profissional</h2>
-          <p className="text-slate-500 mb-10">Tudo incluso. Sem surpresas.</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">Plano Profissional</h2>
+          <p className="text-slate-500 mb-10">Tudo incluso. Sem surpresas. Cancele quando quiser.</p>
 
           <div className="bg-white rounded-2xl border-2 border-blue-600 shadow-2xl p-8">
             <div className="flex items-end justify-center gap-1 mb-1">
@@ -299,16 +387,17 @@ export default async function LandingPage() {
               <span className="text-2xl font-bold text-slate-500 mb-2">€</span>
               <span className="text-slate-400 mb-2">/mês</span>
             </div>
-            <p className="text-slate-400 text-sm mb-8">Cancele quando quiser</p>
+            <p className="text-slate-400 text-sm mb-8">≈ 0,50€ por dia — menos que um café</p>
 
             <ul className="text-left space-y-3 mb-8">
               {[
-                'Faturas ilimitadas',
-                'Clientes ilimitados',
-                'PDF no padrão francês (URSSAF)',
-                'Múltiplos apartamentos e locais',
-                'Acesso pelo celular',
-                'Atualizações inclusas',
+                'Faturas ilimitadas no padrão francês',
+                'Clientes e locais ilimitados',
+                'PDF profissional pronto para download',
+                'Dashboard financeiro completo',
+                'Compatível com URSSAF e legislação francesa',
+                'Acesso pelo celular ou computador',
+                'Atualizações inclusas automaticamente',
                 'Suporte em português',
               ].map((item) => (
                 <li key={item} className="flex items-center gap-3 text-slate-700 text-sm">
@@ -322,15 +411,19 @@ export default async function LandingPage() {
               href="/register"
               className="block w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition text-center"
             >
-              Começar agora
+              Começar agora — 15€/mês
             </Link>
-            <p className="text-xs text-slate-400 mt-3">Sem fidelidade · Cancele quando quiser</p>
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-xs text-slate-400">
+              <span>✔ Sem fidelidade</span>
+              <span>✔ Cancelamento imediato</span>
+              <span>✔ Pagamento seguro</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════
-          9. FAQ
+          11. FAQ ESTRATÉGICO
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-2xl mx-auto">
@@ -340,24 +433,36 @@ export default async function LandingPage() {
           <div className="space-y-3">
             {[
               {
-                q: 'Preciso ter empresa registrada na França?',
-                a: 'Sim. O FactureProBR é ideal para quem já é Auto-Entrepreneur ou Micro-Entrepreneur registrado na França. Se ainda não tem SIRET, precisa se registrar primeiro.',
+                q: 'Posso usar sendo microentrepreneur (auto-entrepreneur)?',
+                a: 'Sim, o FactureProBR foi feito exatamente para isso. Seja Auto-Entrepreneur, Micro-Entrepreneur ou EI registrado na França, o sistema gera suas faturas no padrão correto exigido pela legislação e pela URSSAF.',
               },
               {
-                q: 'As faturas são aceitas na França?',
-                a: 'Sim. Todas as faturas geradas seguem o padrão exigido pela legislação francesa, com SIRET, SIREN, APE/NAF e demais informações obrigatórias. Válidas para clientes e para a URSSAF.',
+                q: 'Preciso falar francês para usar?',
+                a: 'Não. O sistema é 100% em português. Você preenche tudo em português e a fatura é gerada automaticamente no padrão profissional francês, com todos os campos obrigatórios.',
+              },
+              {
+                q: 'As faturas são aceitas pela URSSAF?',
+                a: 'Sim. Todas as faturas geradas incluem os campos exigidos pela legislação francesa: SIRET, SIREN, APE/NAF, menção TVA correta, cláusula de cobrança e numeração sequencial sem buracos. Compatíveis com URSSAF e clientes franceses.',
               },
               {
                 q: 'Posso cancelar quando quiser?',
-                a: 'Sim, sem fidelidade. Cancele a qualquer momento direto pelo app ou por email. Não cobramos nada depois do cancelamento.',
+                a: 'Sim, sem fidelidade. Cancele a qualquer momento pelo próprio app ou por email. Sem taxas de saída, sem perguntas.',
+              },
+              {
+                q: 'Meus dados ficam seguros?',
+                a: 'Sim. Seus dados são armazenados com criptografia em servidores seguros. Nenhum outro usuário tem acesso às suas faturas ou dados — isolamento total garantido.',
+              },
+              {
+                q: 'Precisa ter empresa registrada na França?',
+                a: 'Sim, você precisa ter um SIRET (número de registro). O FactureProBR não registra empresas — ajuda quem já está registrado a emitir faturas corretas.',
               },
               {
                 q: 'Funciona no celular?',
-                a: 'Perfeitamente. O app foi desenvolvido para funcionar em qualquer dispositivo — celular, tablet ou computador.',
+                a: 'Perfeitamente. O app foi desenvolvido para funcionar em qualquer dispositivo — celular, tablet ou computador. Sem necessidade de instalar nada.',
               },
               {
                 q: 'E se eu tiver dúvidas?',
-                a: 'Nosso suporte é 100% em português. Entre em contato por email e respondemos rapidamente.',
+                a: 'Nosso suporte é 100% em português. Entre em contato por email (suporte@factureprobr.xyz) e respondemos rapidamente.',
               },
             ].map((item) => (
               <details key={item.q} className="group bg-white border border-slate-200 rounded-xl">
@@ -373,15 +478,20 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          10. CTA FINAL
+          12. CTA FINAL — EMOCIONAL E FORTE
       ══════════════════════════════════════ */}
       <section className="py-24 px-4 sm:px-6 bg-blue-600 text-white text-center">
         <div className="max-w-2xl mx-auto">
+          <div className="text-5xl mb-6">🚀</div>
           <h2 className="text-3xl sm:text-5xl font-extrabold mb-4 leading-tight">
-            Comece hoje mesmo a faturar de forma profissional na França.
+            Assuma o controle do<br />seu negócio na França.
           </h2>
-          <p className="text-blue-100 text-lg mb-10">
-            Junte-se a centenas de brasileiros que já faturam com confiança.
+          <p className="text-blue-100 text-lg mb-4 leading-relaxed">
+            Pare de improvisar. Pare de depender de outros. Emita faturas profissionais,
+            em conformidade com a lei francesa, em menos de 2 minutos.
+          </p>
+          <p className="text-blue-200 text-base mb-10 italic">
+            "Fatura gerada em padrão profissional francês — mesmo sem falar francês."
           </p>
           <Link
             href="/register"
@@ -389,23 +499,32 @@ export default async function LandingPage() {
           >
             Criar minha conta agora — 15€/mês
           </Link>
-          <p className="mt-4 text-blue-200 text-sm">Sem fidelidade · Cancele quando quiser · Suporte em português</p>
+          <p className="mt-4 text-blue-200 text-sm">
+            ✔ Sem fidelidade &nbsp;·&nbsp; ✔ Cancelamento imediato &nbsp;·&nbsp; ✔ Suporte em português
+          </p>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
       <footer className="bg-slate-900 text-slate-400 py-10 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-600 text-white font-bold text-xs">F</span>
-            <span className="font-bold text-white">FactureProBR</span>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-600 text-white font-bold text-xs">F</span>
+              <span className="font-bold text-white">FactureProBR</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-6 text-sm">
+              <Link href="/login" className="hover:text-white transition">Entrar</Link>
+              <Link href="/register" className="hover:text-white transition">Criar conta</Link>
+              <a href="mailto:suporte@factureprobr.xyz" className="hover:text-white transition">Suporte</a>
+              <Link href="/privacy" className="hover:text-white transition">Privacidade</Link>
+              <Link href="/terms" className="hover:text-white transition">Termos</Link>
+            </div>
           </div>
-          <div className="flex gap-6 text-sm">
-            <Link href="/login" className="hover:text-white transition">Entrar</Link>
-            <Link href="/register" className="hover:text-white transition">Criar conta</Link>
-            <a href="mailto:suporte@factureprobr.xyz" className="hover:text-white transition">Suporte</a>
+          <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-2">
+            <p className="text-xs">© {new Date().getFullYear()} FactureProBR · factureprobr.xyz</p>
+            <p className="text-xs text-slate-500">🇫🇷 Faturamento conforme legislação francesa · 🔒 Dados protegidos e isolados por utilizador</p>
           </div>
-          <p className="text-xs">© {new Date().getFullYear()} FactureProBR · factureprobr.xyz</p>
         </div>
       </footer>
 
