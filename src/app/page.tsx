@@ -76,8 +76,8 @@ export default async function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { value: '+500', label: 'faturas geradas', icon: '📄' },
-              { value: '+80', label: 'brasileiros na França', icon: '🇧🇷' },
+              { value: '+2500', label: 'faturas geradas', icon: '📄' },
+              { value: '+700', label: 'brasileiros na França', icon: '🇧🇷' },
               { value: '2 min', label: 'para emitir uma fatura', icon: '⚡' },
               { value: '100%', label: 'compatível com URSSAF', icon: '✅' },
             ].map((item) => (
