@@ -71,6 +71,7 @@ export interface Invoice {
   issue_date: string;
   due_date: string;
   status: InvoiceStatus;
+  tva_rate: number;
   total_ht: number;
   total_tva: number;
   total_ttc: number;
