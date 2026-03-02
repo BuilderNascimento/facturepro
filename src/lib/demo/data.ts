@@ -7,6 +7,8 @@ export const demoSettings: CompanySettings = {
   siret: '',
   ape_naf: '',
   address: '',
+  city: null,
+  postal_code: null,
   email: '',
   phone: '',
   iban: '',
