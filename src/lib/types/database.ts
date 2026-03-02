@@ -13,6 +13,8 @@ export interface CompanySettings {
   siret: string | null;
   ape_naf: string | null;
   address: string | null;
+  city: string | null;
+  postal_code: string | null;
   email: string | null;
   phone: string | null;
   iban: string | null;

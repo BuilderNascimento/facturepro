@@ -9,6 +9,8 @@ export const companySettingsSchema = z.object({
   siret: z.string().optional(),
   ape_naf: z.string().optional(),
   address: z.string().optional(),
+  city: z.string().optional(),
+  postal_code: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
   iban: z.string().optional(),

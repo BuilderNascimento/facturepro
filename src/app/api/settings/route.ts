@@ -20,11 +20,15 @@ export async function PUT(request: Request) {
     .maybeSingle();
 
   if (existing) {
-    // Lock core identity fields once SIRET is set — requires support to change
+    // Fields locked once SIRET is set — only editable via support
+    const LOCKED_FIELDS = ['company_name', 'siret', 'legal_status', 'ape_naf'];
     const isLocked = !!(existing as { siret?: string | null }).siret;
+
+    const allData = parsed.data as Record<string, unknown>;
     const updateData = isLocked
-      ? (({ company_name: _cn, siret: _s, legal_status: _ls, ape_naf: _an, ...rest }) => rest)(parsed.data as Record<string, unknown>)
-      : parsed.data;
+      ? Object.fromEntries(Object.entries(allData).filter(([k]) => !LOCKED_FIELDS.includes(k)))
+      : allData;
+
     const { error } = await supabase
       .from('company_settings')
       .update(updateData)
@@ -33,7 +37,7 @@ export async function PUT(request: Request) {
   } else {
     const { error } = await supabase
       .from('company_settings')
-      .insert(parsed.data);
+      .insert({ ...(parsed.data as Record<string, unknown>), user_id: user.id });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

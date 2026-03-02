@@ -5,6 +5,8 @@ export interface InvoicePdfData {
     siret?: string | null;
     ape_naf?: string | null;
     address?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
     email?: string | null;
     phone?: string | null;
     iban?: string | null;
@@ -184,6 +186,7 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
         <div class="name">${esc(c.company_name)}</div>
         ${c.legal_status ? `<div class="line">${esc(c.legal_status)}</div>` : ''}
         ${c.address ? `<div class="line">${esc(c.address)}</div>` : ''}
+        ${(c.postal_code || c.city) ? `<div class="line">${[esc(c.postal_code), esc(c.city)].filter(Boolean).join(' ')}</div>` : ''}
         ${c.phone ? `<div class="line">Tél. : ${esc(c.phone)}</div>` : ''}
         ${c.email ? `<div class="line">${esc(c.email)}</div>` : ''}
       </div>
@@ -206,6 +209,7 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
           ${c.legal_status ? `<div>${esc(c.legal_status)}</div>` : ''}
           ${c.siret ? `<div>SIRET : ${esc(c.siret)}</div>` : ''}
           ${c.address ? `<div>${esc(c.address)}</div>` : ''}
+          ${(c.postal_code || c.city) ? `<div>${[esc(c.postal_code), esc(c.city)].filter(Boolean).join(' ')}</div>` : ''}
           ${c.phone ? `<div>Tél. : ${esc(c.phone)}</div>` : ''}
           ${c.email ? `<div>${esc(c.email)}</div>` : ''}
         </div>

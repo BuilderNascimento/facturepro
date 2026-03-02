@@ -71,6 +71,8 @@ export async function GET(
               siret: settings.siret,
               ape_naf: (settings as Record<string, unknown>).ape_naf as string | null,
               address: settings.address,
+              city: (settings as Record<string, unknown>).city as string | null,
+              postal_code: (settings as Record<string, unknown>).postal_code as string | null,
               email: settings.email,
               phone: settings.phone,
               iban: settings.iban,

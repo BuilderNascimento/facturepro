@@ -25,6 +25,8 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     siret: settings?.siret ?? '',
     ape_naf: settings?.ape_naf ?? '',
     address: settings?.address ?? '',
+    city: (settings as (typeof settings & { city?: string | null }))?.city ?? '',
+    postal_code: (settings as (typeof settings & { postal_code?: string | null }))?.postal_code ?? '',
     email: settings?.email ?? '',
     phone: settings?.phone ?? '',
     iban: settings?.iban ?? '',
@@ -45,11 +47,15 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     const form = e.currentTarget;
     const formData = new FormData(form);
     const raw = {
-      company_name: formData.get('company_name'),
-      legal_status: formData.get('legal_status') || undefined,
-      siret: formData.get('siret') || undefined,
-      ape_naf: formData.get('ape_naf') || undefined,
+      // When identity fields are locked they're disabled and won't appear in FormData
+      // so fall back to the saved settings values
+      company_name: (formData.get('company_name') as string) || settings?.company_name || '',
+      legal_status: (formData.get('legal_status') as string) || settings?.legal_status || undefined,
+      siret: (formData.get('siret') as string) || settings?.siret || undefined,
+      ape_naf: (formData.get('ape_naf') as string) || settings?.ape_naf || undefined,
       address: formData.get('address') || undefined,
+      city: formData.get('city') as string || undefined,
+      postal_code: formData.get('postal_code') as string || undefined,
       email: formData.get('email') || undefined,
       phone: formData.get('phone') || undefined,
       iban: formData.get('iban') || undefined,
@@ -153,8 +159,18 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Contacto</h2>
         <div className="space-y-4">
           <div>
-            <label className={L}>Endereço</label>
-            <textarea name="address" rows={2} defaultValue={defaultValues.address} className={F} placeholder="Rua, código postal, cidade, país" />
+            <label className={L}>Endereço (rua e número)</label>
+            <input name="address" defaultValue={defaultValues.address} className={F} placeholder="Ex: 12 Rue de la Paix" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={L}>CEP / Code postal</label>
+              <input name="postal_code" defaultValue={defaultValues.postal_code} className={F} placeholder="Ex: 75001" maxLength={10} />
+            </div>
+            <div>
+              <label className={L}>Cidade</label>
+              <input name="city" defaultValue={defaultValues.city} className={F} placeholder="Ex: Paris" />
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
