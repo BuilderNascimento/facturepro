@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Check, X, ChevronDown, Star, Shield, Zap, FileText, Users, Smartphone, Lock, RefreshCw, AlertTriangle, TrendingUp } from 'lucide-react';
 
@@ -174,7 +174,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          5. COMO FUNCIONA — 4 PASSOS
+          5. COMO FUNCIONA" id="como-funciona — 4 PASSOS
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
@@ -376,7 +376,7 @@ export default async function LandingPage() {
       {/* ══════════════════════════════════════
           10. PREÇO
       ══════════════════════════════════════ */}
-      <section className="py-20 px-4 sm:px-6" id="preco">
+      <section className="py-20 px-4 sm:px-6" id="precos-antigo">
         <div className="max-w-md mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">Plano Profissional</h2>
           <p className="text-slate-500 mb-10">Tudo incluso. Sem surpresas. Cancele quando quiser.</p>
@@ -539,7 +539,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          12. FAQ ESTRATÉGICO
+          12. FAQ" id="faq ESTRATÉGICO
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-2xl mx-auto">
@@ -633,8 +633,8 @@ export default async function LandingPage() {
               <Link href="/login" className="hover:text-white transition">Entrar</Link>
               <Link href="/register" className="hover:text-white transition">Criar conta</Link>
               <a href="mailto:suporte@factureprobr.xyz" className="hover:text-white transition">Suporte</a>
-              <Link href="/privacy" className="hover:text-white transition">Privacidade</Link>
-              <Link href="/terms" className="hover:text-white transition">Termos</Link>
+              <Link href="/privacidade" className="hover:text-white transition">Privacidade</Link>
+              <Link href="/termos" className="hover:text-white transition">Termos</Link>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
