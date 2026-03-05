@@ -1,38 +1,33 @@
-import nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_PORT === '465',
-  auth:
-    process.env.SMTP_USER && process.env.SMTP_PASS
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      : undefined,
-});
+import { resend, FROM_EMAIL } from './resend-client';
 
 export interface SendInvoiceEmailOptions {
   to: string;
   invoiceNumber: string;
   pdfBuffer: Buffer;
-  from?: string;
 }
 
 export async function sendInvoiceEmail({
   to,
   invoiceNumber,
   pdfBuffer,
-  from = process.env.SMTP_FROM || 'FacturePro <noreply@facturepro.fr>',
 }: SendInvoiceEmailOptions): Promise<void> {
-  if (!process.env.SMTP_HOST) {
-    throw new Error('SMTP non configuré (SMTP_HOST manquant)');
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY não configurada');
   }
 
-  await transporter.sendMail({
-    from,
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
     to,
-    subject: `Facture ${invoiceNumber}`,
-    text: `Veuillez trouver ci-joint la facture ${invoiceNumber}.`,
-    html: `<p>Veuillez trouver ci-joint la facture <strong>${invoiceNumber}</strong>.</p>`,
+    subject: `Facture ${invoiceNumber} — FactureProBR`,
+    html: `
+      <div style="font-family:Arial,sans-serif;color:#111827;max-width:480px;margin:0 auto">
+        <h2 style="color:#1d4ed8">Facture ${invoiceNumber}</h2>
+        <p>Veuillez trouver ci-joint la facture <strong>${invoiceNumber}</strong>.</p>
+        <p style="color:#6b7280;font-size:13px">
+          Ce document a été généré via FactureProBR, conforme aux exigences fiscales françaises.
+        </p>
+      </div>
+    `,
     attachments: [
       {
         filename: `facture-${invoiceNumber}.pdf`,
@@ -40,4 +35,8 @@ export async function sendInvoiceEmail({
       },
     ],
   });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

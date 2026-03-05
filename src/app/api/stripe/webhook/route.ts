@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import type Stripe from 'stripe';
+import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 
 // Usa o cliente de serviço (bypass RLS) para webhooks
 function getServiceClient() {
@@ -47,6 +48,17 @@ export async function POST(request: Request) {
           current_period_end: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString(),
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
+
+        // Enviar email de boas-vindas ao novo assinante
+        try {
+          const { data: userData } = await supabase.auth.admin.getUserById(userId);
+          const userEmail = userData?.user?.email;
+          if (userEmail) {
+            await sendWelcomeEmail(userEmail);
+          }
+        } catch (emailErr) {
+          console.error('[Webhook] Erro ao enviar email de boas-vindas:', emailErr);
+        }
         break;
       }
 
