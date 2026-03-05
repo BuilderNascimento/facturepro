@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import type Stripe from 'stripe';
 import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
+import { sendPaymentFailedEmail } from '@/lib/email/send-payment-failed-email';
 
 // Usa o cliente de serviço (bypass RLS) para webhooks
 function getServiceClient() {
@@ -85,10 +86,26 @@ export async function POST(request: Request) {
         const subId = (invoice as unknown as { subscription: string }).subscription;
         if (!subId) break;
 
-        await supabase
+        const { data: subRow } = await supabase
           .from('subscriptions')
           .update({ status: 'past_due', updated_at: new Date().toISOString() })
-          .eq('stripe_subscription_id', subId);
+          .eq('stripe_subscription_id', subId)
+          .select('user_id')
+          .single();
+
+        // Enviar email de pagamento falhado ao utilizador
+        try {
+          const userId = subRow?.user_id;
+          if (userId) {
+            const { data: userData } = await supabase.auth.admin.getUserById(userId);
+            const userEmail = userData?.user?.email;
+            if (userEmail) {
+              await sendPaymentFailedEmail(userEmail);
+            }
+          }
+        } catch (emailErr) {
+          console.error('[Webhook] Erro ao enviar email de pagamento falhado:', emailErr);
+        }
         break;
       }
     }
