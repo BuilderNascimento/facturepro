@@ -107,7 +107,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
       {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-3">{error}</p>}
-      {success && <p className="text-green-700 text-sm bg-green-50 rounded-lg p-3">Configurações guardadas com sucesso.</p>}
+          {success && <p className="text-green-700 text-sm bg-green-50 rounded-lg p-3">Configurações salvas com sucesso.</p>}
 
       {/* Identidade da empresa */}
       <div>
@@ -122,7 +122,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         {isIdentityLocked && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
             Os dados de identidade da empresa estão bloqueados para garantir a integridade das suas faturas.
-            Para solicitar uma alteração, contacte o suporte:{' '}
+            Para solicitar uma alteração, entre em contato com o suporte:{' '}
             <a href="mailto:suporte@factureprobr.xyz" className="font-medium underline">suporte@factureprobr.xyz</a>
           </div>
         )}
@@ -236,7 +236,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
       <div className="pt-2">
         <button type="submit" disabled={loading} className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium text-sm">
-          {loading ? 'Salvando...' : 'Guardar configurações'}
+          {loading ? 'Salvando...' : 'Salvar configurações'}
         </button>
       </div>
     </form>

@@ -35,8 +35,8 @@ export async function sendWelcomeEmail(to: string): Promise<void> {
                 🎉 O seu acesso está pronto!
               </h2>
               <p style="margin:0 0 16px;color:#374151;font-size:15px;line-height:1.6">
-                Parabéns pela sua inscrição! A sua subscrição foi activada com sucesso.
-                A partir de agora pode gerar faturas 100% válidas em França, em português, sem complicação.
+                Parabéns pela sua inscrição! A sua assinatura foi ativada com sucesso.
+                A partir de agora você pode gerar faturas 100% válidas na França, em português, sem complicação.
               </p>
 
               <!-- Steps -->
@@ -76,14 +76,14 @@ export async function sendWelcomeEmail(to: string): Promise<void> {
                   <td style="text-align:center">
                     <a href="https://factureprobr.xyz/dashboard"
                        style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.01em">
-                      Aceder ao painel →
+                      Acessar o painel →
                     </a>
                   </td>
                 </tr>
               </table>
 
               <p style="margin:24px 0 0;color:#6b7280;font-size:13px;line-height:1.6">
-                Alguma dúvida? Responda este email ou escreva para
+                Alguma dúvida? Responda este e-mail ou escreva para
                 <a href="mailto:${SUPPORT_EMAIL}" style="color:#1d4ed8">${SUPPORT_EMAIL}</a>.
                 Estamos aqui para ajudar.
               </p>

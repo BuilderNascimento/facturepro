@@ -41,11 +41,11 @@ export async function sendPaymentFailedEmail(to: string): Promise<void> {
           <tr>
             <td style="padding:40px">
               <p style="margin:0 0 16px;color:#374151;font-size:15px;line-height:1.6">
-                Tentámos cobrar a sua subscrição do <strong>FactureProBR</strong> mas o pagamento foi recusado.
+                Tentamos cobrar a sua assinatura do <strong>FactureProBR</strong> mas o pagamento foi recusado.
               </p>
               <p style="margin:0 0 24px;color:#374151;font-size:15px;line-height:1.6">
-                O seu acesso pode ser suspenso em breve. Para continuar a emitir faturas sem interrupção, 
-                actualize os seus dados de pagamento agora.
+                O seu acesso pode ser suspenso em breve. Para continuar emitindo faturas sem interrupção, 
+                atualize seus dados de pagamento agora.
               </p>
 
               <!-- What can happen box -->
@@ -68,7 +68,7 @@ export async function sendPaymentFailedEmail(to: string): Promise<void> {
                   <td style="text-align:center">
                     <a href="https://factureprobr.xyz/billing-issue"
                        style="display:inline-block;background:#dc2626;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.01em">
-                      Actualizar dados de pagamento →
+                      Atualizar dados de pagamento →
                     </a>
                   </td>
                 </tr>
@@ -79,7 +79,7 @@ export async function sendPaymentFailedEmail(to: string): Promise<void> {
                 <tr>
                   <td style="padding:16px 24px">
                     <p style="margin:0;color:#166534;font-size:14px;line-height:1.6">
-                      ✅ <strong>Os seus dados estão seguros.</strong> As suas faturas e clientes permanecem guardados. 
+                      ✅ <strong>Seus dados estão seguros.</strong> Suas faturas e clientes permanecem salvos. 
                       Assim que o pagamento for resolvido, o acesso é restaurado imediatamente.
                     </p>
                   </td>
@@ -87,7 +87,7 @@ export async function sendPaymentFailedEmail(to: string): Promise<void> {
               </table>
 
               <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.6">
-                Precisa de ajuda? Responda este email ou contacte-nos em
+                Precisa de ajuda? Responda este e-mail ou entre em contato:
                 <a href="mailto:${SUPPORT_EMAIL}" style="color:#dc2626">${SUPPORT_EMAIL}</a>.
               </p>
             </td>
