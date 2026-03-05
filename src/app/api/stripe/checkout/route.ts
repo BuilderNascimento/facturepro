@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { stripe, STRIPE_PRICE_ID } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
-export async function POST() {
+export async function POST(request: Request) {
+  // Max 5 checkout attempts per IP per 10 minutes
+  if (!rateLimit(getClientIp(request), 5, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Muitas tentativas. Aguarde alguns minutos.' }, { status: 429 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();

@@ -3,11 +3,17 @@ import { NextResponse } from 'next/server';
 import { generateInvoicePdfBuffer } from '@/lib/pdf/generate-pdf';
 import type { InvoicePdfData } from '@/lib/pdf/invoice-template';
 import { sendInvoiceEmail } from '@/lib/email/send-invoice-email';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Max 10 emails per IP per hour
+  if (!rateLimit(getClientIp(request), 10, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Limite de envios atingido. Tente novamente em 1 hora.' }, { status: 429 });
+  }
+
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

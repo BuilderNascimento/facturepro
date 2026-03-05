@@ -46,6 +46,9 @@ export async function GET(
       const { createClient } = await import('@/lib/supabase/server');
       const supabase = await createClient();
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return new NextResponse('Não autorizado', { status: 401 });
+
       const [settingsRes, invoiceRes] = await Promise.all([
         supabase.from('company_settings').select('*').limit(1).maybeSingle(),
         supabase.from('invoices')
