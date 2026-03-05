@@ -47,15 +47,11 @@ export default function RegisterPage() {
         return;
       }
 
-      // 2. Se não retornou sessão (email confirmation ativo), tenta login manual
+      // 2. Se não retornou sessão, o email precisa ser confirmado
       if (!data.session) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) {
-          // Provavelmente email não confirmado — redireciona para login com aviso
-          setError('Conta criada! Verifique seu email para confirmar e depois faça login.');
-          setLoading(false);
-          return;
-        }
+        // Redireciona para página de confirmação de email
+        window.location.href = `/confirmar-email?email=${encodeURIComponent(email)}`;
+        return;
       }
 
       // 3. Redirecionar para o Stripe checkout

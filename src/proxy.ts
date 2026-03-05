@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const protectedPaths = ['/dashboard', '/clients', '/services', '/invoices', '/settings', '/properties'];
-const publicPaths = ['/', '/register', '/login', '/subscribe', '/payment-success', '/billing-issue'];
+const publicPaths = ['/', '/register', '/login', '/subscribe', '/payment-success', '/billing-issue', '/confirmar-email', '/privacidade', '/termos'];
 
 function isProtected(pathname: string) {
   return protectedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));

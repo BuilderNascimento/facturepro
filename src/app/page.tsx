@@ -423,7 +423,123 @@ export default async function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          11. FAQ ESTRATÉGICO
+          11. PREÇOS — COMPARATIVO
+      ══════════════════════════════════════ */}
+      <section className="py-20 px-4 sm:px-6 bg-white" id="precos">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="inline-block bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4">Simples e transparente</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">
+              Um plano. Tudo incluído.
+            </h2>
+            <p className="text-slate-500 text-lg max-w-xl mx-auto">
+              Sem surpresas, sem planos complicados. Pague uma vez por mês e gere quantas faturas precisar.
+            </p>
+          </div>
+
+          {/* Comparativo */}
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            {/* Sem FactureProBR */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-2xl">😰</span>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400 mb-0.5">Sem o FactureProBR</p>
+                  <p className="font-bold text-slate-700 text-lg">Do jeito difícil</p>
+                </div>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  'Criar fatura no Word ou Excel manualmente',
+                  'Errar a numeração sequencial obrigatória',
+                  'Não saber as menções legais exigidas na França',
+                  'Depender de alguém que fale francês',
+                  'Arriscar multa por fatura fora do padrão',
+                  'Gastar 1-2 horas por fatura',
+                  'Perder o histórico em caso de perda do computador',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-slate-600 text-sm">
+                    <span className="mt-0.5 text-red-400 shrink-0">✕</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Com FactureProBR */}
+            <div className="rounded-2xl border-2 border-blue-600 bg-white p-8 relative shadow-xl">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">RECOMENDADO</span>
+              </div>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-2xl">😎</span>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-blue-500 mb-0.5">Com o FactureProBR</p>
+                  <p className="font-bold text-slate-900 text-lg">Do jeito certo</p>
+                </div>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  'Fatura pronta em menos de 2 minutos',
+                  'Numeração sequencial automática e correta',
+                  'Menções legais incluídas automaticamente',
+                  'Tudo em português, sem precisar do francês',
+                  'PDF profissional no padrão fiscal francês',
+                  'Histórico completo salvo na nuvem',
+                  'Gestão de clientes, serviços e pagamentos',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-slate-700 text-sm">
+                    <span className="mt-0.5 text-blue-600 shrink-0 font-bold">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Plano */}
+          <div className="max-w-sm mx-auto">
+            <div className="rounded-2xl border-2 border-blue-600 bg-white shadow-2xl overflow-hidden">
+              <div className="bg-blue-600 px-8 py-5 text-center">
+                <p className="text-blue-100 text-sm font-medium mb-1">Plano único — acesso completo</p>
+                <div className="flex items-end justify-center gap-1">
+                  <span className="text-5xl font-extrabold text-white">15</span>
+                  <span className="text-xl font-bold text-blue-200 mb-1">€/mês</span>
+                </div>
+                <p className="text-blue-200 text-xs mt-1">Cancele quando quiser</p>
+              </div>
+              <div className="px-8 py-6">
+                <ul className="space-y-2 mb-6">
+                  {[
+                    'Faturas ilimitadas',
+                    'Clientes e serviços ilimitados',
+                    'PDF profissional para download',
+                    'Suporte em português',
+                    'Atualizações incluídas',
+                    'Dados protegidos e isolados',
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                      <span className="text-blue-600 font-bold">✓</span> {item}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="/register"
+                  className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition text-base"
+                >
+                  Começar agora →
+                </a>
+                <p className="text-xs text-slate-400 text-center mt-3">
+                  Sem taxa de setup · Sem fidelidade
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          12. FAQ ESTRATÉGICO
       ══════════════════════════════════════ */}
       <section className="py-20 px-4 sm:px-6 bg-slate-50">
         <div className="max-w-2xl mx-auto">
