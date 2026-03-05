@@ -54,8 +54,9 @@ export async function POST(request: Request) {
         try {
           const { data: userData } = await supabase.auth.admin.getUserById(userId);
           const userEmail = userData?.user?.email;
+          const userName = userData?.user?.user_metadata?.full_name as string | undefined;
           if (userEmail) {
-            await sendWelcomeEmail(userEmail);
+            await sendWelcomeEmail(userEmail, userName);
           }
         } catch (emailErr) {
           console.error('[Webhook] Erro ao enviar email de boas-vindas:', emailErr);

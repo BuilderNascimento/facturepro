@@ -1,6 +1,6 @@
 import { resend, FROM_EMAIL, SUPPORT_EMAIL } from './resend-client';
 
-export async function sendWelcomeEmail(to: string): Promise<void> {
+export async function sendWelcomeEmail(to: string, name?: string): Promise<void> {
   if (!process.env.RESEND_API_KEY) return;
 
   await resend.emails.send({
@@ -32,10 +32,10 @@ export async function sendWelcomeEmail(to: string): Promise<void> {
           <tr>
             <td style="padding:40px">
               <h2 style="margin:0 0 16px;color:#111827;font-size:20px;font-weight:700">
-                🎉 O seu acesso está pronto!
+                🎉 ${name ? `Olá, ${name}! ` : ''}Seu acesso está pronto!
               </h2>
               <p style="margin:0 0 16px;color:#374151;font-size:15px;line-height:1.6">
-                Parabéns pela sua inscrição! A sua assinatura foi ativada com sucesso.
+                Parabéns pela sua inscrição! Sua assinatura foi ativada com sucesso.
                 A partir de agora você pode gerar faturas 100% válidas na França, em português, sem complicação.
               </p>
 
@@ -74,9 +74,9 @@ export async function sendWelcomeEmail(to: string): Promise<void> {
               <table cellpadding="0" cellspacing="0" style="margin:0 auto">
                 <tr>
                   <td style="text-align:center">
-                    <a href="https://factureprobr.xyz/dashboard"
+                    <a href="https://factureprobr.xyz/login"
                        style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.01em">
-                      Acessar o painel →
+                      Fazer login e acessar o painel →
                     </a>
                   </td>
                 </tr>
