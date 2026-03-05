@@ -521,9 +521,15 @@ export default async function LandingPage() {
               <Link href="/terms" className="hover:text-white transition">Termos</Link>
             </div>
           </div>
-          <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-2">
+          <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
             <p className="text-xs">© {new Date().getFullYear()} FactureProBR · factureprobr.xyz</p>
-            <p className="text-xs text-slate-500">🇫🇷 Faturamento conforme legislação francesa · 🔒 Dados protegidos e isolados por utilizador</p>
+            <div className="flex items-center gap-4 text-xs">
+              <a href="/privacidade" className="hover:text-slate-200 transition">Política de Privacidade</a>
+              <span className="text-slate-700">·</span>
+              <a href="/termos" className="hover:text-slate-200 transition">Termos de Uso</a>
+              <span className="text-slate-700">·</span>
+              <span className="text-slate-500">🇫🇷 Conforme legislação francesa · 🔒 Dados protegidos</span>
+            </div>
           </div>
         </div>
       </footer>

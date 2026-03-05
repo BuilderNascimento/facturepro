@@ -165,7 +165,11 @@ export default function RegisterPage() {
           </form>
 
           <p className="text-xs text-slate-500 text-center mt-4">
-            Ao continuar, você será redirecionado para o Stripe para finalizar o pagamento seguro de 15€/mês.
+            Ao continuar, você concorda com os nossos{' '}
+            <Link href="/termos" className="text-blue-600 hover:underline">Termos de Uso</Link>
+            {' '}e{' '}
+            <Link href="/privacidade" className="text-blue-600 hover:underline">Política de Privacidade</Link>.
+            Será redirecionado ao Stripe para o pagamento seguro de 15€/mês.
           </p>
 
           <div className="border-t border-slate-100 mt-6 pt-4 text-center">
