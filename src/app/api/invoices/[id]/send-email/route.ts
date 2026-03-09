@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { generateInvoicePdfBuffer } from '@/lib/pdf/generate-pdf';
+import { getInvoiceHtml } from '@/lib/pdf/invoice-template';
 import type { InvoicePdfData } from '@/lib/pdf/invoice-template';
 import { sendInvoiceEmail } from '@/lib/email/send-invoice-email';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
@@ -94,21 +94,14 @@ export async function POST(
     items,
   };
 
-  let buffer: Buffer;
-  try {
-    buffer = await generateInvoicePdfBuffer(pdfData);
-  } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'Erreur génération PDF' },
-      { status: 500 }
-    );
-  }
+  // Usar HTML em anexo (evita Chromium/Puppeteer no Vercel — libnss3 etc.)
+  const html = getInvoiceHtml(pdfData);
 
   try {
     await sendInvoiceEmail({
       to,
       invoiceNumber: invoice.invoice_number,
-      pdfBuffer: buffer,
+      htmlAttachment: html,
     });
   } catch (e) {
     return NextResponse.json(
