@@ -53,6 +53,7 @@ export async function POST(request: Request) {
   const { data: invoice, error: invError } = await supabase
     .from('invoices')
     .insert({
+      user_id: user.id,
       invoice_number: numData,
       client_id: parsed.data.client_id,
       issue_date: parsed.data.issue_date,
