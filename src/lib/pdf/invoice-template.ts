@@ -164,8 +164,9 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
     .p2-body .kv span:first-child{color:#6b7280;min-width:160px}
     .net-payer{display:flex;justify-content:space-between;align-items:center;background:#1d4ed8;color:#fff;padding:12px 14px;border-radius:4px;margin-top:16px;font-size:16px;font-weight:700}
     @media print{
+      @page{margin:12mm}
       body{background:#fff;padding:0}
-      .toolbar{display:none!important}
+      .toolbar,.toolbar-tip{display:none!important}
       .page{box-shadow:none;border-radius:0;padding:20px 24px;margin-bottom:0}
       .page-break{page-break-before:always}
     }
@@ -176,6 +177,7 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
     <button class="btn btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button>
     <button class="btn btn-close" onclick="window.close()">✕ Fermer</button>
   </div>
+  <p class="toolbar-tip" style="max-width:860px;margin:0 auto 8px;font-size:11px;color:#6b7280">Pour ne pas afficher l’URL sur le PDF imprimé : avant d’imprimer, désactivez « En-têtes et pieds de page » dans les options d’impression.</p>
 
   <!-- ═══ PAGE 1 ═══ -->
   <div class="page">
