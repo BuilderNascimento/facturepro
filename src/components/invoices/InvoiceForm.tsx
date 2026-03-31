@@ -198,7 +198,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           const dateList = validNormal.map((d) => formatDateLabel(d.date)).join(', ');
           items.push({
             service_id: null,
-            description: aptName ? `Nettoyage normal — ${aptName} — ${dateList}` : `Nettoyage normal — ${dateList}`,
+            description: aptName ? `Nettoyage standart — ${aptName} — ${dateList}` : `Nettoyage standart — ${dateList}`,
             quantity: validNormal.length,
             unit_price: normalPrice,
           });
