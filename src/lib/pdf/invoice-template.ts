@@ -67,7 +67,7 @@ function getSiren(siret: string | null | undefined): string {
 
 /** Formats a description for display: if it contains ' — ' with comma-separated dates, show each date on its own line */
 function formatDescription(desc: string): string {
-  // Pattern: "Nettoyage standart — 01 jan., 07 jan., 15 jan."
+  // Pattern: "Nettoyage standard — 01 jan., 07 jan., 15 jan."
   const match = desc.match(/^(.+?)\s*—\s*(.+)$/);
   if (match) {
     const label = esc(match[1].trim());
