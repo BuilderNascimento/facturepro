@@ -31,6 +31,7 @@ export interface InvoicePdfData {
     issue_date: string;
     due_date: string;
     status: string;
+    description?: string | null;
     total_ht: number;
     total_tva: number;
     total_ttc: number;
@@ -111,6 +112,7 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
   const indemnityText = c.indemnity_text_default || defaultIndemnity;
   const legalText = c.legal_text_default || 'TVA non applicable, art. 293B du CGI';
   const hasBank = c.iban || c.bic || c.bank_name;
+  const invoiceDescription = inv.description ? esc(inv.description) : '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -143,6 +145,10 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
     .party-head{background:#f9fafb;border-bottom:1px solid #e5e7eb;padding:6px 12px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
     .party-body{padding:10px 12px;font-size:12px;line-height:1.7;color:#374151}
     .party-body .pname{font-size:14px;font-weight:700;color:#111827;margin-bottom:2px}
+    /* Free description */
+    .desc-box{border:1px solid #e5e7eb;border-radius:4px;margin-bottom:18px;overflow:hidden}
+    .desc-head{background:#f9fafb;border-bottom:1px solid #e5e7eb;padding:6px 12px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
+    .desc-body{padding:10px 12px;font-size:12.5px;line-height:1.7;color:#374151;white-space:pre-wrap}
     /* Table */
     .items-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px}
     .items-table thead tr{background:#f1f5f9}
@@ -227,6 +233,13 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
         </div>
       </div>
     </div>
+
+    ${invoiceDescription ? `
+    <div class="desc-box">
+      <div class="desc-head">Description</div>
+      <div class="desc-body">${invoiceDescription}</div>
+    </div>
+    ` : ''}
 
     <!-- Tableau des prestations -->
     <table class="items-table">

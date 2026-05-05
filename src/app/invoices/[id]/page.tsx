@@ -34,6 +34,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const client = (invoice as { clients?: { company_name?: string; address?: string | null; email?: string | null; phone?: string | null } | null }).clients;
   const items = (invoice.invoice_items ?? []) as { description: string; quantity: number; unit_price: number; total: number }[];
+  const freeDescription = (invoice as { description?: string | null }).description;
 
   return (
     <div className="space-y-6">
@@ -74,6 +75,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           {client?.email && <p className="text-slate-600 text-sm">{client.email}</p>}
           {client?.phone && <p className="text-slate-600 text-sm">{client.phone}</p>}
         </div>
+
+        {freeDescription ? (
+          <div className="px-6 pb-6">
+            <h3 className="text-sm font-medium text-slate-500 mb-2">Descrição</h3>
+            <div className="text-slate-700 text-sm whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-lg p-4">
+              {freeDescription}
+            </div>
+          </div>
+        ) : null}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-y border-slate-200">

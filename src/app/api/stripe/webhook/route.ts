@@ -29,6 +29,10 @@ export async function POST(request: Request) {
     return new NextResponse(`Webhook error: ${msg}`, { status: 400 });
   }
 
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return new NextResponse('Webhook misconfigured: missing Supabase env', { status: 500 });
+  }
+
   const supabase = getServiceClient();
 
   try {
@@ -112,6 +116,8 @@ export async function POST(request: Request) {
     }
   } catch (e) {
     console.error('Webhook handler error:', e);
+    const msg = e instanceof Error ? e.message : String(e);
+    return new NextResponse(`Webhook handler error: ${msg}`, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { isSubscriptionActive } from '@/lib/stripe';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -88,9 +89,9 @@ export async function proxy(request: NextRequest) {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const isActive = sub?.status === 'active' &&
-        sub?.current_period_end &&
-        new Date(sub.current_period_end) > new Date();
+      const isActive = sub
+        ? isSubscriptionActive(String(sub.status ?? ''), sub.current_period_end ?? null)
+        : false;
 
       if (!isActive) {
         const url = request.nextUrl.clone();

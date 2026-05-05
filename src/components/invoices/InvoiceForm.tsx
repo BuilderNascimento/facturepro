@@ -40,6 +40,7 @@ interface InvoiceFormProps {
     due_date: string;
     status: string;
     tva_rate?: number;
+    description?: string | null;
     items: { service_id: string | null; description: string; quantity: number; unit_price: number }[];
   };
   clients?: Client[];
@@ -98,6 +99,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [dueDate, setDueDate] = useState(invoice?.due_date ?? format(addDays(new Date(), 30), 'yyyy-MM-dd'));
   const [status, setStatus] = useState(invoice?.status ?? 'draft');
   const [tvaRate, setTvaRate] = useState<number>(invoice?.tva_rate ?? 0);
+  const [invoiceDescription, setInvoiceDescription] = useState<string>(invoice?.description ?? '');
 
   const [displacements, setDisplacements] = useState<DisplacementEntry[]>([]);
   const [extraHours, setExtraHours] = useState<ExtraHourEntry[]>([]);
@@ -308,7 +310,15 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       return;
     }
 
-    const raw = { client_id: usedClientId, issue_date: issueDate, due_date: dueDate, status, tva_rate: tvaRate, items };
+    const raw = {
+      client_id: usedClientId,
+      issue_date: issueDate,
+      due_date: dueDate,
+      status,
+      tva_rate: tvaRate,
+      description: invoiceDescription,
+      items,
+    };
     const parsed = invoiceSchema.safeParse(raw);
     if (!parsed.success) {
       setError(parsed.error.errors[0]?.message ?? 'Dados inválidos');
@@ -448,6 +458,18 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             <Tip text="Data limite para o cliente efetuar o pagamento." />
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required className={`${INPUT} mt-2`} />
           </div>
+        </div>
+
+        <div className="mt-4">
+          <label className={LABEL}>Descrição</label>
+          <Tip text="Campo livre para qualquer informação que deve aparecer na fatura (ex.: tipo de serviço, notas, observações)." />
+          <textarea
+            value={invoiceDescription}
+            onChange={(e) => setInvoiceDescription(e.target.value)}
+            rows={4}
+            placeholder="Escreva aqui qualquer informação adicional…"
+            className={`${INPUT} mt-2`}
+          />
         </div>
       </div>
 

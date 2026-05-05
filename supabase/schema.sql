@@ -113,6 +113,7 @@ CREATE TABLE invoices (
   issue_date DATE NOT NULL,
   due_date DATE NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'overdue')),
+  description TEXT,
   total_ht DECIMAL(12,2) NOT NULL DEFAULT 0,
   total_tva DECIMAL(12,2) NOT NULL DEFAULT 0,
   total_ttc DECIMAL(12,2) NOT NULL DEFAULT 0,

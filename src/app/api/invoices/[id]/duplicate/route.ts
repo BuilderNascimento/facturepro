@@ -41,6 +41,7 @@ export async function POST(
       issue_date: today,
       due_date: dueDate,
       status: 'draft',
+      description: (original as { description?: string | null }).description ?? null,
       tva_rate: original.tva_rate ?? 0,
       total_ht: original.total_ht,
       total_tva: original.total_tva,

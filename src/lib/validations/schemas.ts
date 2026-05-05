@@ -66,6 +66,7 @@ export const invoiceSchema = z.object({
   due_date: z.string().min(1, 'Data de vencimento obrigatória'),
   status: statusEnum.default('draft'),
   tva_rate: z.coerce.number().min(0).max(100).default(0),
+  description: z.string().max(5000).optional().or(z.literal('')),
   items: z.array(invoiceItemSchema).min(1, 'Au moins une ligne'),
 });
 

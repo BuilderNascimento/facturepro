@@ -46,6 +46,7 @@ export async function PUT(
   const totalHt = parsed.data.items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
   const totalTva = Math.round(totalHt * tvaRate) / 100;
   const totalTtc = totalHt + totalTva;
+  const description = parsed.data.description?.trim() ? parsed.data.description.trim() : null;
 
   if (IS_DEMO) {
     const { storeUpdateInvoice } = await import('@/lib/demo/store');
@@ -56,6 +57,7 @@ export async function PUT(
         issue_date: parsed.data.issue_date,
         due_date: parsed.data.due_date,
         status: parsed.data.status,
+        description,
         tva_rate: tvaRate,
         total_ht: totalHt,
         total_tva: totalTva,
@@ -80,7 +82,17 @@ export async function PUT(
 
   const { error: invError } = await supabase
     .from('invoices')
-    .update({ client_id: parsed.data.client_id, issue_date: parsed.data.issue_date, due_date: parsed.data.due_date, status: parsed.data.status, tva_rate: tvaRate, total_ht: totalHt, total_tva: totalTva, total_ttc: totalTtc })
+    .update({
+      client_id: parsed.data.client_id,
+      issue_date: parsed.data.issue_date,
+      due_date: parsed.data.due_date,
+      status: parsed.data.status,
+      description,
+      tva_rate: tvaRate,
+      total_ht: totalHt,
+      total_tva: totalTva,
+      total_ttc: totalTtc,
+    })
     .eq('id', id)
     .is('deleted_at', null);
 

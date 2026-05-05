@@ -24,7 +24,7 @@ async function getData(id: string) {
       unit_price: i.unit_price,
     }));
     return {
-      invoice: { id: inv.id, invoice_number: inv.invoice_number, client_id: inv.client_id, issue_date: inv.issue_date, due_date: inv.due_date, status: inv.status, items },
+      invoice: { id: inv.id, invoice_number: inv.invoice_number, client_id: inv.client_id, issue_date: inv.issue_date, due_date: inv.due_date, status: inv.status, description: inv.description ?? null, items },
       clients,
       properties,
     };
@@ -34,7 +34,7 @@ async function getData(id: string) {
   const supabase = await createClient();
   const { data: invoice, error } = await supabase
     .from('invoices')
-    .select('id, invoice_number, client_id, issue_date, due_date, status, invoice_items(id, service_id, description, quantity, unit_price)')
+    .select('id, invoice_number, client_id, issue_date, due_date, status, description, invoice_items(id, service_id, description, quantity, unit_price)')
     .eq('id', id)
     .is('deleted_at', null)
     .single();
@@ -48,7 +48,7 @@ async function getData(id: string) {
     return { service_id: row.service_id, description: row.description, quantity: row.quantity, unit_price: row.unit_price };
   });
   return {
-    invoice: { id: invoice.id, invoice_number: invoice.invoice_number, client_id: invoice.client_id, issue_date: invoice.issue_date, due_date: invoice.due_date, status: invoice.status, items },
+    invoice: { id: invoice.id, invoice_number: invoice.invoice_number, client_id: invoice.client_id, issue_date: invoice.issue_date, due_date: invoice.due_date, status: invoice.status, description: (invoice as { description?: string | null }).description ?? null, items },
     clients: cr.data ?? [],
     properties: (pr.data ?? []) as unknown as Property[],
   };

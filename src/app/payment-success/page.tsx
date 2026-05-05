@@ -7,6 +7,7 @@ export default function PaymentSuccessPage() {
   const router = useRouter();
   const [attempts, setAttempts] = useState(0);
   const [message, setMessage] = useState('Confirmando seu pagamento...');
+  const [giveUp, setGiveUp] = useState(false);
 
   useEffect(() => {
     let count = 0;
@@ -30,8 +31,8 @@ export default function PaymentSuccessPage() {
       setAttempts(count);
 
       if (count >= maxAttempts) {
-        setMessage('Redirecionando para o dashboard...');
-        setTimeout(() => router.push('/dashboard'), 1000);
+        setGiveUp(true);
+        setMessage('Ainda não conseguimos confirmar a assinatura. Você pode tentar novamente em alguns instantes.');
         return;
       }
 
@@ -68,6 +69,25 @@ export default function PaymentSuccessPage() {
             <p className="text-xs text-slate-400">
               Isso pode levar alguns segundos...
             </p>
+          )}
+          {giveUp && (
+            <div className="mt-4 w-full space-y-2">
+              <button
+                onClick={() => router.push('/subscribe')}
+                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition"
+              >
+                Voltar para a assinatura
+              </button>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full py-3 border border-slate-300 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition"
+              >
+                Tentar acessar o painel
+              </button>
+              <p className="text-xs text-slate-400">
+                Se o problema persistir, pode ser falha de webhook/Stripe. Entre em contato com o suporte.
+              </p>
+            </div>
           )}
         </div>
       </div>
