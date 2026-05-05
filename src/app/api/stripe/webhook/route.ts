@@ -5,6 +5,16 @@ import type Stripe from 'stripe';
 import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 import { sendPaymentFailedEmail } from '@/lib/email/send-payment-failed-email';
 
+function toIsoFromStripeUnixSeconds(value: unknown): string | null {
+  const n = typeof value === 'number' ? value : (typeof value === 'string' ? Number(value) : NaN);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  try {
+    return new Date(n * 1000).toISOString();
+  } catch {
+    return null;
+  }
+}
+
 // Usa o cliente de serviço (bypass RLS) para webhooks
 function getServiceClient() {
   return createClient(
@@ -43,6 +53,10 @@ export async function POST(request: Request) {
         if (!userId || !session.subscription) break;
 
         const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+        const periodEndIso = toIsoFromStripeUnixSeconds((sub as unknown as { current_period_end?: unknown }).current_period_end);
+        if (!periodEndIso) {
+          return new NextResponse('Webhook error: invalid current_period_end from Stripe', { status: 500 });
+        }
 
         await supabase.from('subscriptions').upsert({
           user_id: userId,
@@ -50,7 +64,7 @@ export async function POST(request: Request) {
           stripe_subscription_id: sub.id,
           stripe_price_id: sub.items.data[0]?.price.id,
           status: sub.status,
-          current_period_end: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString(),
+          current_period_end: periodEndIso,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
@@ -74,13 +88,18 @@ export async function POST(request: Request) {
         const userId = sub.metadata?.user_id;
         if (!userId) break;
 
+        const periodEndIso = toIsoFromStripeUnixSeconds((sub as unknown as { current_period_end?: unknown }).current_period_end);
+        if (!periodEndIso) {
+          return new NextResponse('Webhook error: invalid current_period_end from Stripe', { status: 500 });
+        }
+
         await supabase.from('subscriptions').upsert({
           user_id: userId,
           stripe_customer_id: sub.customer as string,
           stripe_subscription_id: sub.id,
           stripe_price_id: sub.items.data[0]?.price.id,
           status: event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
-          current_period_end: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString(),
+          current_period_end: periodEndIso,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
         break;
