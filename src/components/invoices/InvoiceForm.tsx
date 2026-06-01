@@ -7,8 +7,8 @@ import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info } from 'lucide-react';
 import { invoiceSchema } from '@/lib/validations/schemas';
-import { getNormalCleaningLabel, isVeryStayClient } from '@/lib/cleaning-labels';
-import { getVeryStayPropertyVisual } from '@/lib/verystay-property-visuals';
+import { getNormalCleaningLabel, isVeryStayClient, isVeryStayInvoiceContext } from '@/lib/cleaning-labels';
+import { formatPropertyOptionLabel, getVeryStayPropertyVisual } from '@/lib/verystay-property-visuals';
 import { VeryStayColorLegend, VeryStayPropertyPicker } from '@/components/invoices/VeryStayPropertyPicker';
 
 interface Client { id: string; company_name: string; email: string | null; }
@@ -131,7 +131,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
   const clientApartments = properties.filter((p) => p.client_id === clientId);
   const selectedClient = clients.find((c) => c.id === clientId);
-  const isVeryStay = isVeryStayClient(selectedClient?.company_name);
+  const isVeryStay = isVeryStayInvoiceContext(selectedClient?.company_name, clientApartments);
 
   function addApartmentBlock() {
     setApartmentBlocks((prev) => [...prev, { key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]);
@@ -486,7 +486,9 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
       {/* ── Blocos de imóveis (modo limpeza) ── */}
       {mode === 'property' && isVeryStay && clientId && clientApartments.length > 0 && (
-        <VeryStayColorLegend properties={clientApartments} />
+        <>
+          <VeryStayColorLegend properties={clientApartments} />
+        </>
       )}
 
       {mode === 'property' && (
@@ -551,7 +553,9 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                       >
                         <option value="">Selecionar local</option>
                         {clientApartments.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
+                          <option key={p.id} value={p.id}>
+                            {isVeryStay ? formatPropertyOptionLabel(p.name) : p.name}
+                          </option>
                         ))}
                       </select>
                     )}
