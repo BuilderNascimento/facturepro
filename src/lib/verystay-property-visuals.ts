@@ -1,13 +1,23 @@
 /**
- * Cores e emojis por imóvel — apenas UI do formulário (VeryStay). O PDF não muda.
+ * Cores e emojis por imóvel (VeryStay) — formulário e PDF.
  * Ménage classique = quadrado (🟩🟪🟧🟨) · Ménage extra = redondo (🟢🟣🟠🟡)
  */
+
+export type PropertyPdfColors = {
+  emoji: string;
+  rowBg: string;
+  rowBorder: string;
+  headerBg: string;
+  text: string;
+};
 
 export type PropertyVisualStyle = {
   /** Emojis quadrados — ménage classique / identidade do imóvel */
   emoji: string;
   /** Emojis redondos — ménage extra */
   emojiExtra: string;
+  pdf: PropertyPdfColors;
+  pdfExtra: PropertyPdfColors;
   headerBg: string;
   headerBorder: string;
   headerText: string;
@@ -21,10 +31,69 @@ export type PropertyVisualStyle = {
   extraHeaderText: string;
 };
 
+const PDF_GREEN: PropertyPdfColors = {
+  emoji: '🟩',
+  rowBg: '#f0fdf4',
+  rowBorder: '#22c55e',
+  headerBg: '#dcfce7',
+  text: '#14532d',
+};
+const PDF_GREEN_EXTRA: PropertyPdfColors = {
+  emoji: '🟢',
+  rowBg: '#ecfdf5',
+  rowBorder: '#16a34a',
+  headerBg: '#bbf7d0',
+  text: '#166534',
+};
+const PDF_PURPLE: PropertyPdfColors = {
+  emoji: '🟪',
+  rowBg: '#faf5ff',
+  rowBorder: '#a855f7',
+  headerBg: '#f3e8ff',
+  text: '#581c87',
+};
+const PDF_PURPLE_EXTRA: PropertyPdfColors = {
+  emoji: '🟣',
+  rowBg: '#f5f3ff',
+  rowBorder: '#9333ea',
+  headerBg: '#ede9fe',
+  text: '#5b21b6',
+};
+const PDF_ORANGE: PropertyPdfColors = {
+  emoji: '🟧',
+  rowBg: '#fff7ed',
+  rowBorder: '#f97316',
+  headerBg: '#ffedd5',
+  text: '#9a3412',
+};
+const PDF_ORANGE_EXTRA: PropertyPdfColors = {
+  emoji: '🟠',
+  rowBg: '#fffbeb',
+  rowBorder: '#ea580c',
+  headerBg: '#fed7aa',
+  text: '#c2410c',
+};
+const PDF_AMBER: PropertyPdfColors = {
+  emoji: '🟨',
+  rowBg: '#fefce8',
+  rowBorder: '#eab308',
+  headerBg: '#fef9c3',
+  text: '#854d0e',
+};
+const PDF_AMBER_EXTRA: PropertyPdfColors = {
+  emoji: '🟡',
+  rowBg: '#fffbeb',
+  rowBorder: '#ca8a04',
+  headerBg: '#fde68a',
+  text: '#a16207',
+};
+
 const STYLES: Record<string, PropertyVisualStyle> = {
   sparis: {
     emoji: '🟩',
     emojiExtra: '🟢',
+    pdf: PDF_GREEN,
+    pdfExtra: PDF_GREEN_EXTRA,
     headerBg: 'bg-green-50',
     headerBorder: 'border-green-400',
     headerText: 'text-green-900',
@@ -40,6 +109,8 @@ const STYLES: Record<string, PropertyVisualStyle> = {
   lyrique: {
     emoji: '🟪',
     emojiExtra: '🟣',
+    pdf: PDF_PURPLE,
+    pdfExtra: PDF_PURPLE_EXTRA,
     headerBg: 'bg-purple-50',
     headerBorder: 'border-purple-400',
     headerText: 'text-purple-900',
@@ -55,6 +126,8 @@ const STYLES: Record<string, PropertyVisualStyle> = {
   parislive: {
     emoji: '🟧',
     emojiExtra: '🟠',
+    pdf: PDF_ORANGE,
+    pdfExtra: PDF_ORANGE_EXTRA,
     headerBg: 'bg-orange-50',
     headerBorder: 'border-orange-400',
     headerText: 'text-orange-900',
@@ -70,6 +143,8 @@ const STYLES: Record<string, PropertyVisualStyle> = {
   sweetparis: {
     emoji: '🟨',
     emojiExtra: '🟡',
+    pdf: PDF_AMBER,
+    pdfExtra: PDF_AMBER_EXTRA,
     headerBg: 'bg-amber-50',
     headerBorder: 'border-amber-400',
     headerText: 'text-amber-900',
@@ -86,6 +161,20 @@ const STYLES: Record<string, PropertyVisualStyle> = {
   sparissimo: {
     emoji: '🟩🟧',
     emojiExtra: '🟢🟠',
+    pdf: {
+      emoji: '🟩🟧',
+      rowBg: 'linear-gradient(90deg, #f0fdf4 0%, #fff7ed 100%)',
+      rowBorder: '#22c55e',
+      headerBg: 'linear-gradient(90deg, #dcfce7 0%, #ffedd5 100%)',
+      text: '#14532d',
+    },
+    pdfExtra: {
+      emoji: '🟢🟠',
+      rowBg: 'linear-gradient(90deg, #ecfdf5 0%, #fffbeb 100%)',
+      rowBorder: '#ea580c',
+      headerBg: 'linear-gradient(90deg, #bbf7d0 0%, #fed7aa 100%)',
+      text: '#9a3412',
+    },
     headerBg: 'bg-gradient-to-r from-green-50 via-amber-50/30 to-orange-50',
     headerBorder: 'border-green-400',
     headerText: 'text-slate-900',
@@ -104,6 +193,20 @@ const STYLES: Record<string, PropertyVisualStyle> = {
   gaiteparis: {
     emoji: '🟪🟨',
     emojiExtra: '🟣🟡',
+    pdf: {
+      emoji: '🟪🟨',
+      rowBg: 'linear-gradient(90deg, #faf5ff 0%, #fefce8 100%)',
+      rowBorder: '#a855f7',
+      headerBg: 'linear-gradient(90deg, #f3e8ff 0%, #fef9c3 100%)',
+      text: '#581c87',
+    },
+    pdfExtra: {
+      emoji: '🟣🟡',
+      rowBg: 'linear-gradient(90deg, #f5f3ff 0%, #fffbeb 100%)',
+      rowBorder: '#ca8a04',
+      headerBg: 'linear-gradient(90deg, #ede9fe 0%, #fde68a 100%)',
+      text: '#854d0e',
+    },
     headerBg: 'bg-gradient-to-r from-purple-50 via-violet-50/30 to-amber-50',
     headerBorder: 'border-purple-400',
     headerText: 'text-slate-900',
@@ -151,6 +254,59 @@ export function formatPropertyOptionLabel(propertyName: string): string {
   const visual = getVeryStayPropertyVisual(propertyName);
   if (!visual) return propertyName;
   return `${visual.emoji} ${propertyName}`;
+}
+
+export function getVeryStayPdfColors(
+  propertyName: string,
+  isExtra: boolean
+): PropertyPdfColors | null {
+  const visual = getVeryStayPropertyVisual(propertyName);
+  if (!visual) return null;
+  return isExtra ? visual.pdfExtra : visual.pdf;
+}
+
+export type ParsedVeryStayLine = {
+  label: string;
+  propertyName: string | null;
+  datesText: string;
+  isExtra: boolean;
+  isCleaning: boolean;
+};
+
+/** Linhas geradas pelo formulário: "Ménage classique — Sparis — 01 juin., …" */
+export function parseVeryStayLineItem(description: string): ParsedVeryStayLine {
+  const parts = description.split(' — ').map((p) => p.trim()).filter(Boolean);
+  const label = parts[0] ?? description;
+  const isExtra = /extra/i.test(label);
+  const isCleaning =
+    /ménage|menage|nettoyage/i.test(label) && !/déplacement|deplacement|heures/i.test(label);
+
+  if (parts.length >= 3 && isCleaning) {
+    return {
+      label,
+      propertyName: parts[1],
+      datesText: parts.slice(2).join(' — '),
+      isExtra,
+      isCleaning: true,
+    };
+  }
+
+  return {
+    label,
+    propertyName: null,
+    datesText: parts.length > 1 ? parts.slice(1).join(' — ') : '',
+    isExtra,
+    isCleaning,
+  };
+}
+
+export function extractPropertyNamesFromItems(items: { description: string }[]): { name: string }[] {
+  const names = new Set<string>();
+  for (const item of items) {
+    const parsed = parseVeryStayLineItem(item.description);
+    if (parsed.propertyName) names.add(parsed.propertyName);
+  }
+  return [...names].map((name) => ({ name }));
 }
 
 /** Legenda fixa: regra quadrado / redondo (todos os imóveis) */

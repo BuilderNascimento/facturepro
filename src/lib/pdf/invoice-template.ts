@@ -1,3 +1,7 @@
+import { isVeryStayInvoiceContext } from '@/lib/cleaning-labels';
+import { extractPropertyNamesFromItems } from '@/lib/verystay-property-visuals';
+import { getVeryStayInvoiceHtml } from './verystay-invoice-template';
+
 export interface InvoicePdfData {
   company: {
     company_name: string;
@@ -68,7 +72,7 @@ function getSiren(siret: string | null | undefined): string {
 
 /** Formats a description for display: if it contains ' — ' with comma-separated dates, show each date on its own line */
 function formatDescription(desc: string): string {
-  // Pattern: "Nettoyage standard — 01 jan., 07 jan., 15 jan."
+  // Pattern: "Nettoyage normal|standard — 01 jan., 07 jan., 15 jan."
   const match = desc.match(/^(.+?)\s*—\s*(.+)$/);
   if (match) {
     const label = esc(match[1].trim());
@@ -79,6 +83,15 @@ function formatDescription(desc: string): string {
 }
 
 export function getInvoiceHtml(data: InvoicePdfData): string {
+  if (
+    isVeryStayInvoiceContext(
+      data.client.company_name,
+      extractPropertyNamesFromItems(data.items)
+    )
+  ) {
+    return getVeryStayInvoiceHtml(data);
+  }
+
   const c = data.company;
   const cl = data.client;
   const inv = data.invoice;
