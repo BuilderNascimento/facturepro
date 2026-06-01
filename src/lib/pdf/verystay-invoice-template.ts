@@ -1,4 +1,7 @@
 import type { InvoicePdfData } from './invoice-template';
+
+type CompanyData = InvoicePdfData['company'];
+type ClientData = InvoicePdfData['client'];
 import { isExtraPersonnelLine, parseExtraPersonnelLine } from '@/lib/extra-personnel';
 import { isCaveLine } from '@/lib/invoice-french-services';
 import {
@@ -33,6 +36,40 @@ function getSiren(siret: string | null | undefined): string {
   if (!siret) return '';
   const digits = siret.replace(/\s/g, '');
   return digits.length >= 9 ? digits.slice(0, 9) : digits;
+}
+
+const PARTY_LINE = 'font-size:12px;line-height:1.65;color:#374151';
+
+function renderPrestataireParty(c: CompanyData): string {
+  return [
+    `<div style="font-weight:700;font-size:14px;color:#111827;margin-bottom:2px">${esc(c.company_name)}</div>`,
+    c.legal_status ? `<div style="${PARTY_LINE}">${esc(c.legal_status)}</div>` : '',
+    c.siret ? `<div style="${PARTY_LINE}">SIRET : ${esc(c.siret)}</div>` : '',
+    c.ape_naf ? `<div style="${PARTY_LINE}">APE/NAF : ${esc(c.ape_naf)}</div>` : '',
+    c.address ? `<div style="${PARTY_LINE}">${esc(c.address)}</div>` : '',
+    c.postal_code || c.city
+      ? `<div style="${PARTY_LINE}">${[esc(c.postal_code), esc(c.city)].filter(Boolean).join(' ')}</div>`
+      : '',
+    c.phone ? `<div style="${PARTY_LINE}">Tél. : ${esc(c.phone)}</div>` : '',
+    c.email ? `<div style="${PARTY_LINE}">${esc(c.email)}</div>` : '',
+    c.vat_number ? `<div style="${PARTY_LINE}">N° TVA : ${esc(c.vat_number)}</div>` : '',
+  ]
+    .filter(Boolean)
+    .join('');
+}
+
+function renderClientParty(cl: ClientData): string {
+  return [
+    `<div style="font-weight:700;font-size:14px;color:#111827;margin-bottom:2px">${esc(cl.company_name).toUpperCase()}</div>`,
+    cl.contact_name ? `<div style="${PARTY_LINE}">${esc(cl.contact_name)}</div>` : '',
+    cl.address ? `<div style="${PARTY_LINE}">${esc(cl.address)}</div>` : '',
+    cl.siret ? `<div style="${PARTY_LINE}">SIRET : ${esc(cl.siret)}</div>` : '',
+    cl.vat_number ? `<div style="${PARTY_LINE}">N° TVA : ${esc(cl.vat_number)}</div>` : '',
+    cl.phone ? `<div style="${PARTY_LINE}">Tél. : ${esc(cl.phone)}</div>` : '',
+    cl.email ? `<div style="${PARTY_LINE}">${esc(cl.email)}</div>` : '',
+  ]
+    .filter(Boolean)
+    .join('');
 }
 
 function apartmentDisplayName(propertyName: string, isExtra: boolean): string {
@@ -322,14 +359,11 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
     <div style="display:flex;gap:20px;margin-bottom:20px">
       <div style="flex:1;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
         <div style="background:#f9fafb;padding:6px 12px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase">Prestataire</div>
-        <div style="padding:10px 12px;font-size:12px;line-height:1.6">${esc(c.company_name)}</div>
+        <div style="padding:10px 12px">${renderPrestataireParty(c)}</div>
       </div>
       <div style="flex:1;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
         <div style="background:#f9fafb;padding:6px 12px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase">Client</div>
-        <div style="padding:10px 12px;font-size:12px;line-height:1.6">
-          <div style="font-weight:700;font-size:14px">${esc(cl.company_name).toUpperCase()}</div>
-          ${cl.contact_name ? `<div>${esc(cl.contact_name)}</div>` : ''}
-        </div>
+        <div style="padding:10px 12px">${renderClientParty(cl)}</div>
       </div>
     </div>
 

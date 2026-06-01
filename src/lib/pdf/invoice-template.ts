@@ -241,7 +241,9 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
           <div class="pname">${esc(cl.company_name).toUpperCase()}</div>
           ${cl.contact_name ? `<div>${esc(cl.contact_name)}</div>` : ''}
           ${cl.address ? `<div>${esc(cl.address)}</div>` : ''}
-          ${cl.phone ? `<div>${esc(cl.phone)}</div>` : ''}
+          ${cl.siret ? `<div>SIRET : ${esc(cl.siret)}</div>` : ''}
+          ${cl.vat_number ? `<div>N° TVA : ${esc(cl.vat_number)}</div>` : ''}
+          ${cl.phone ? `<div>Tél. : ${esc(cl.phone)}</div>` : ''}
           ${cl.email ? `<div>${esc(cl.email)}</div>` : ''}
         </div>
       </div>
