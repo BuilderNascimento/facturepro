@@ -1,5 +1,11 @@
 import type { InvoicePdfData } from './invoice-template';
-import { getVeryStayPdfColors, parseVeryStayLineItem } from '@/lib/verystay-property-visuals';
+import { isExtraPersonnelLine, parseExtraPersonnelLine } from '@/lib/extra-personnel';
+import { isCaveLine } from '@/lib/invoice-french-services';
+import {
+  getVeryStayPdfColors,
+  getVeryStayPropertyVisual,
+  parseVeryStayLineItem,
+} from '@/lib/verystay-property-visuals';
 
 function esc(s: string | null | undefined): string {
   if (!s) return '';
@@ -59,6 +65,35 @@ function renderCleaningRow(
     </tr>`;
 }
 
+function personnelCodeFromAssignments(assignmentsText: string): string {
+  if (!assignmentsText) return '—';
+  const segments = assignmentsText.split(' + ');
+  let code = '';
+  for (const seg of segments) {
+    const name = seg.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const visual = getVeryStayPropertyVisual(name);
+    if (visual) code += visual.emoji;
+  }
+  return code || '—';
+}
+
+function renderPersonnelRow(
+  item: { description: string; quantity: number; unit_price: number },
+  parsed: NonNullable<ReturnType<typeof parseExtraPersonnelLine>>
+): string {
+  const total = Number(item.quantity) * Number(item.unit_price);
+  const code = personnelCodeFromAssignments(parsed.assignmentsText);
+  return `
+    <tr style="background:#eef2ff;color:#312e81">
+      <td style="border:1px solid #e5e7eb;padding:8px 10px;text-align:center;font-size:14px;vertical-align:middle;width:52px">${code}</td>
+      <td style="border:1px solid #e5e7eb;padding:8px 12px;font-weight:600;vertical-align:middle;border-left:4px solid #6366f1">${esc(parsed.label)}</td>
+      <td style="border:1px solid #e5e7eb;padding:8px 10px;text-align:center;vertical-align:middle">1</td>
+      <td style="border:1px solid #e5e7eb;padding:8px 12px;vertical-align:middle;font-size:12px">${esc(parsed.assignmentsText)}${parsed.totalHoursText ? `<br/><span style="color:#4f46e5;font-size:11px">${esc(parsed.totalHoursText)}</span>` : ''}</td>
+      <td style="border:1px solid #e5e7eb;padding:8px 12px;text-align:right;vertical-align:middle;white-space:nowrap">${fmtMoney(Number(item.unit_price))}</td>
+      <td style="border:1px solid #e5e7eb;padding:8px 12px;text-align:right;vertical-align:middle;font-weight:700;white-space:nowrap">${fmtMoney(total)}</td>
+    </tr>`;
+}
+
 function renderOtherRow(item: {
   description: string;
   quantity: number;
@@ -81,15 +116,39 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
   const siren = getSiren(c.siret);
 
   const cleaningRows: string[] = [];
+  const personnelRows: string[] = [];
+  const caveRows: string[] = [];
+  const diversRows: string[] = [];
   const otherRows: string[] = [];
   let cleaningSubtotal = 0;
+  let personnelSubtotal = 0;
+  let caveSubtotal = 0;
+  let diversSubtotal = 0;
 
   for (const item of data.items) {
-    const parsed = parseVeryStayLineItem(item.description);
     const lineTotal = Number(item.quantity) * Number(item.unit_price);
+    if (isExtraPersonnelLine(item.description)) {
+      const personnel = parseExtraPersonnelLine(item.description);
+      if (personnel) {
+        personnelRows.push(renderPersonnelRow(item, personnel));
+        personnelSubtotal += lineTotal;
+      }
+      continue;
+    }
+    if (isCaveLine(item.description)) {
+      caveRows.push(renderOtherRow(item));
+      caveSubtotal += lineTotal;
+      continue;
+    }
+    const parsed = parseVeryStayLineItem(item.description);
     if (parsed.isCleaning && parsed.propertyName) {
       cleaningRows.push(renderCleaningRow(item, parsed));
       cleaningSubtotal += lineTotal;
+    } else if (
+      /^ménage pendant|^déplacement\s*—|^deplacement\s*—/i.test(item.description.trim())
+    ) {
+      diversRows.push(renderOtherRow(item));
+      diversSubtotal += lineTotal;
     } else {
       otherRows.push(renderOtherRow(item));
     }
@@ -138,6 +197,63 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
       ${
         cleaningSubtotal > 0
           ? `<div style="text-align:right;font-size:13px;font-weight:700;color:#374151;padding:4px 8px">Sous-total ménage : ${fmtMoney(cleaningSubtotal)}</div>`
+          : ''
+      }
+    </div>`
+      : '';
+
+  const caveSection =
+    caveRows.length > 0
+      ? `
+    <div style="margin-bottom:16px">
+      <div style="background:#78716c;border:1px solid #57534e;border-radius:6px 6px 0 0;padding:8px 14px;font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.05em">
+        Caves Antonio et Tai
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px">
+        ${tableHead}
+        <tbody>${caveRows.join('')}</tbody>
+      </table>
+      ${
+        caveSubtotal > 0
+          ? `<div style="text-align:right;font-size:13px;font-weight:700;color:#44403c;padding:4px 8px">Sous-total caves : ${fmtMoney(caveSubtotal)}</div>`
+          : ''
+      }
+    </div>`
+      : '';
+
+  const diversSection =
+    diversRows.length > 0
+      ? `
+    <div style="margin-bottom:16px">
+      <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:6px 6px 0 0;padding:8px 14px;font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em">
+        Divers (séjour, déplacements…)
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px">
+        ${tableHead}
+        <tbody>${diversRows.join('')}</tbody>
+      </table>
+      ${
+        diversSubtotal > 0
+          ? `<div style="text-align:right;font-size:13px;font-weight:700;color:#92400e;padding:4px 8px">Sous-total divers : ${fmtMoney(diversSubtotal)}</div>`
+          : ''
+      }
+    </div>`
+      : '';
+
+  const personnelSection =
+    personnelRows.length > 0
+      ? `
+    <div style="margin-bottom:16px">
+      <div style="background:#e0e7ff;border:1px solid #a5b4fc;border-radius:6px 6px 0 0;padding:8px 14px;font-size:12px;font-weight:700;color:#3730a3;text-transform:uppercase;letter-spacing:.05em">
+        Extra personnel
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px">
+        ${tableHead}
+        <tbody>${personnelRows.join('')}</tbody>
+      </table>
+      ${
+        personnelSubtotal > 0
+          ? `<div style="text-align:right;font-size:13px;font-weight:700;color:#3730a3;padding:4px 8px">Sous-total extra personnel : ${fmtMoney(personnelSubtotal)}</div>`
           : ''
       }
     </div>`
@@ -224,6 +340,9 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
     </p>
 
     ${cleaningSection}
+    ${caveSection}
+    ${personnelSection}
+    ${diversSection}
     ${otherSection}
 
     <div style="margin-left:auto;max-width:320px;border:2px solid #7c3aed;border-radius:6px;overflow:hidden;margin-top:20px">

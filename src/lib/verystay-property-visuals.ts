@@ -275,6 +275,28 @@ export type ParsedVeryStayLine = {
 
 /** Linhas geradas pelo formulário: "Ménage classique — Sparis — 01 juin., …" */
 export function parseVeryStayLineItem(description: string): ParsedVeryStayLine {
+  if (/^extra\s*personnel/i.test(description.trim())) {
+    return {
+      label: description,
+      propertyName: null,
+      datesText: '',
+      isExtra: false,
+      isCleaning: false,
+    };
+  }
+  if (
+    /^ménage pendant le séjour|^menage pendant le sejour|^caves?\s*—|^déplacement\s*—|^deplacement\s*—/i.test(
+      description.trim()
+    )
+  ) {
+    return {
+      label: description,
+      propertyName: null,
+      datesText: '',
+      isExtra: false,
+      isCleaning: false,
+    };
+  }
   const parts = description.split(' — ').map((p) => p.trim()).filter(Boolean);
   const label = parts[0] ?? description;
   const isExtra = /extra/i.test(label);

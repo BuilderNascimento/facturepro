@@ -5,7 +5,21 @@ import { useRouter } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
-import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info } from 'lucide-react';
+import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info, Plane } from 'lucide-react';
+import { CaveTasksSection, emptyCaveTasks, type CaveTaskState } from '@/components/invoices/CaveTasksSection';
+import { ExtraPersonnelSection } from '@/components/invoices/ExtraPersonnelSection';
+import {
+  buildApartmentDeplacementDescription,
+  buildCaveDescription,
+  buildMenageSejourDescription,
+  FR,
+  TARIF,
+} from '@/lib/invoice-french-services';
+import { formatDateLabel } from '@/lib/invoice-form-utils';
+import {
+  buildExtraPersonnelDescription,
+  type ExtraPersonnelEntryInput,
+} from '@/lib/extra-personnel';
 import { invoiceSchema } from '@/lib/validations/schemas';
 import { getNormalCleaningLabel, isVeryStayClient, isVeryStayInvoiceContext } from '@/lib/cleaning-labels';
 import { formatPropertyOptionLabel, getVeryStayPropertyVisual } from '@/lib/verystay-property-visuals';
@@ -22,6 +36,8 @@ interface Property {
 }
 
 interface CleaningEntry { date: string; }
+interface StayDuringEntry { date: string; description: string; hours: number; amountTtc: number; }
+interface ApartmentDisplacementEntry { enabled: boolean; date: string; description: string; }
 interface DisplacementEntry { description: string; amount: number; }
 interface ExtraHourEntry { description: string; hours: number; rate: number; }
 interface OtherItem { description: string; quantity: number; unit_price: number; }
@@ -32,6 +48,19 @@ interface ApartmentBlock {
   propertyId: string;
   normalDates: CleaningEntry[];
   extraDates: CleaningEntry[];
+  stayCleanings: StayDuringEntry[];
+  apartmentDisplacements: ApartmentDisplacementEntry[];
+}
+
+function emptyApartmentBlock(): ApartmentBlock {
+  return {
+    key: newKey(),
+    propertyId: '',
+    normalDates: [],
+    extraDates: [],
+    stayCleanings: [],
+    apartmentDisplacements: [{ enabled: false, date: '', description: '' }],
+  };
 }
 
 interface InvoiceFormProps {
@@ -75,13 +104,10 @@ function Tip({ text }: { text: string }) {
   );
 }
 
-function formatDateLabel(d: string) {
-  if (!d) return '';
-  try { return format(new Date(d + 'T12:00:00'), 'dd MMM', { locale: fr }); } catch { return d; }
-}
-
 let blockCounter = 0;
+let personnelCounter = 0;
 function newKey() { return `block-${++blockCounter}`; }
+function newPersonnelKey() { return `personnel-${++personnelCounter}`; }
 
 type Mode = 'property' | 'client' | 'obras';
 
@@ -93,9 +119,8 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [mode, setMode] = useState<Mode>(invoice ? 'client' : 'property');
 
   const [clientId, setClientId] = useState(invoice?.client_id ?? '');
-  const [apartmentBlocks, setApartmentBlocks] = useState<ApartmentBlock[]>([
-    { key: newKey(), propertyId: '', normalDates: [], extraDates: [] },
-  ]);
+  const [apartmentBlocks, setApartmentBlocks] = useState<ApartmentBlock[]>([emptyApartmentBlock()]);
+  const [caveTasks, setCaveTasks] = useState<CaveTaskState>(emptyCaveTasks());
   const [directClientId, setDirectClientId] = useState(invoice?.client_id ?? '');
 
   const [issueDate, setIssueDate] = useState(invoice?.issue_date ?? format(new Date(), 'yyyy-MM-dd'));
@@ -108,6 +133,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [extraHours, setExtraHours] = useState<ExtraHourEntry[]>([]);
   const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
   const [workDays, setWorkDays] = useState<WorkDayEntry[]>([{ date: '', description: '', hours: 8, rate: 0 }]);
+  const [extraPersonnel, setExtraPersonnel] = useState<ExtraPersonnelEntryInput[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -132,9 +158,11 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const clientApartments = properties.filter((p) => p.client_id === clientId);
   const selectedClient = clients.find((c) => c.id === clientId);
   const isVeryStay = isVeryStayInvoiceContext(selectedClient?.company_name, clientApartments);
+  const billingClientId = mode === 'property' ? clientId : directClientId;
+  const billingProperties = properties.filter((p) => p.client_id === billingClientId);
 
   function addApartmentBlock() {
-    setApartmentBlocks((prev) => [...prev, { key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]);
+    setApartmentBlocks((prev) => [...prev, emptyApartmentBlock()]);
   }
   function removeApartmentBlock(key: string) {
     setApartmentBlocks((prev) => prev.filter((b) => b.key !== key));
@@ -167,6 +195,83 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     }));
   }
 
+  function addStayCleaning(key: string) {
+    setApartmentBlocks((prev) =>
+      prev.map((b) =>
+        b.key === key
+          ? { ...b, stayCleanings: [...b.stayCleanings, { date: '', description: '', hours: 2, amountTtc: 0 }] }
+          : b
+      )
+    );
+  }
+  function removeStayCleaning(key: string, i: number) {
+    setApartmentBlocks((prev) =>
+      prev.map((b) =>
+        b.key === key ? { ...b, stayCleanings: b.stayCleanings.filter((_, idx) => idx !== i) } : b
+      )
+    );
+  }
+  function updateStayCleaning(
+    key: string,
+    i: number,
+    field: keyof StayDuringEntry,
+    value: string | number
+  ) {
+    setApartmentBlocks((prev) =>
+      prev.map((b) => {
+        if (b.key !== key) return b;
+        const list = [...b.stayCleanings];
+        list[i] = { ...list[i], [field]: value };
+        return { ...b, stayCleanings: list };
+      })
+    );
+  }
+
+  function addApartmentDisplacement(key: string) {
+    setApartmentBlocks((prev) =>
+      prev.map((b) =>
+        b.key === key
+          ? {
+              ...b,
+              apartmentDisplacements: [
+                ...b.apartmentDisplacements,
+                { enabled: false, date: '', description: '' },
+              ],
+            }
+          : b
+      )
+    );
+  }
+  function removeApartmentDisplacement(key: string, i: number) {
+    setApartmentBlocks((prev) =>
+      prev.map((b) => {
+        if (b.key !== key) return b;
+        const next = b.apartmentDisplacements.filter((_, idx) => idx !== i);
+        return {
+          ...b,
+          apartmentDisplacements: next.length
+            ? next
+            : [{ enabled: false, date: '', description: '' }],
+        };
+      })
+    );
+  }
+  function updateApartmentDisplacement(
+    key: string,
+    i: number,
+    field: keyof ApartmentDisplacementEntry,
+    value: string | number | boolean
+  ) {
+    setApartmentBlocks((prev) =>
+      prev.map((b) => {
+        if (b.key !== key) return b;
+        const list = [...b.apartmentDisplacements];
+        list[i] = { ...list[i], [field]: value };
+        return { ...b, apartmentDisplacements: list };
+      })
+    );
+  }
+
   function addDisplacement() { setDisplacements((p) => [...p, { description: '', amount: 0 }]); }
   function removeDisplacement(i: number) { setDisplacements((p) => p.filter((_, idx) => idx !== i)); }
   function updateDisplacement(i: number, field: keyof DisplacementEntry, value: string | number) {
@@ -189,6 +294,70 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   function removeWorkDay(i: number) { setWorkDays((p) => p.filter((_, idx) => idx !== i)); }
   function updateWorkDay(i: number, field: keyof WorkDayEntry, value: string | number) {
     setWorkDays((p) => { const n = [...p]; n[i] = { ...n[i], [field]: value }; return n; });
+  }
+
+  function addExtraPersonnelEntry() {
+    setExtraPersonnel((p) => [
+      ...p,
+      {
+        key: newPersonnelKey(),
+        assignments: [{ propertyId: '', propertyName: '', hours: 0 }],
+        amountTtc: 0,
+      },
+    ]);
+  }
+  function removeExtraPersonnelEntry(key: string) {
+    setExtraPersonnel((p) => p.filter((e) => e.key !== key));
+  }
+  function updateExtraPersonnelAmount(key: string, amountTtc: number) {
+    setExtraPersonnel((p) => p.map((e) => (e.key === key ? { ...e, amountTtc } : e)));
+  }
+  function addPersonnelAssignment(entryKey: string) {
+    setExtraPersonnel((p) =>
+      p.map((e) =>
+        e.key === entryKey
+          ? {
+              ...e,
+              assignments: [...e.assignments, { propertyId: '', propertyName: '', hours: 0 }],
+            }
+          : e
+      )
+    );
+  }
+  function removePersonnelAssignment(entryKey: string, index: number) {
+    setExtraPersonnel((p) =>
+      p.map((e) => {
+        if (e.key !== entryKey) return e;
+        const next = e.assignments.filter((_, i) => i !== index);
+        return {
+          ...e,
+          assignments: next.length ? next : [{ propertyId: '', propertyName: '', hours: 0 }],
+        };
+      })
+    );
+  }
+  function updatePersonnelAssignment(
+    entryKey: string,
+    index: number,
+    field: 'propertyId' | 'hours',
+    value: string | number
+  ) {
+    setExtraPersonnel((p) =>
+      p.map((e) => {
+        if (e.key !== entryKey) return e;
+        const assignments = [...e.assignments];
+        const row = { ...assignments[index] };
+        if (field === 'propertyId') {
+          const prop = properties.find((pr) => pr.id === value);
+          row.propertyId = String(value);
+          row.propertyName = prop?.name ?? '';
+        } else {
+          row.hours = Number(value) || 0;
+        }
+        assignments[index] = row;
+        return { ...e, assignments };
+      })
+    );
   }
 
   function buildItems() {
@@ -226,7 +395,56 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             unit_price: extraPrice,
           });
         }
+
+        block.stayCleanings.forEach((s) => {
+          if (!s.date || !aptName) return;
+          const amount = Number(s.amountTtc) || 0;
+          if (amount <= 0) return;
+          items.push({
+            service_id: null,
+            description: buildMenageSejourDescription(
+              aptName,
+              formatDateLabel(s.date),
+              s.description,
+              Number(s.hours) || 0,
+              amount
+            ),
+            quantity: 1,
+            unit_price: amount,
+          });
+        });
+
+        block.apartmentDisplacements.forEach((d) => {
+          if (!d.enabled || !d.date || !aptName) return;
+          items.push({
+            service_id: null,
+            description: buildApartmentDeplacementDescription(
+              aptName,
+              formatDateLabel(d.date),
+              d.description
+            ),
+            quantity: 1,
+            unit_price: TARIF.deplacementTtc,
+          });
+        });
       }
+    }
+
+    if (caveTasks.rambuteau.enabled && caveTasks.rambuteau.date) {
+      items.push({
+        service_id: null,
+        description: buildCaveDescription(FR.caveRambuteau, formatDateLabel(caveTasks.rambuteau.date)),
+        quantity: 1,
+        unit_price: TARIF.caveTtc,
+      });
+    }
+    if (caveTasks.papin.enabled && caveTasks.papin.date) {
+      items.push({
+        service_id: null,
+        description: buildCaveDescription(FR.cavePapin, formatDateLabel(caveTasks.papin.date)),
+        quantity: 1,
+        unit_price: TARIF.caveTtc,
+      });
     }
 
     if (mode === 'obras') {
@@ -275,6 +493,18 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       }
     });
 
+    extraPersonnel.forEach((entry, index) => {
+      const valid = entry.assignments.filter((a) => a.propertyName && a.hours > 0);
+      const amount = Number(entry.amountTtc) || 0;
+      if (valid.length === 0 && amount <= 0) return;
+      items.push({
+        service_id: null,
+        description: buildExtraPersonnelDescription(index, valid, amount),
+        quantity: 1,
+        unit_price: amount,
+      });
+    });
+
     return items;
   }
 
@@ -285,14 +515,21 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         const prop = properties.find((p) => p.id === block.propertyId);
         t += block.normalDates.filter((d) => d.date).length * Number(prop?.normal_price ?? 0);
         t += block.extraDates.filter((d) => d.date).length * Number(prop?.extra_price ?? 0);
+        block.stayCleanings.forEach((s) => { if (s.date) t += Number(s.amountTtc) || 0; });
+        block.apartmentDisplacements.forEach((d) => {
+          if (d.enabled && d.date) t += TARIF.deplacementTtc;
+        });
       }
     }
+    if (caveTasks.rambuteau.enabled && caveTasks.rambuteau.date) t += TARIF.caveTtc;
+    if (caveTasks.papin.enabled && caveTasks.papin.date) t += TARIF.caveTtc;
     if (mode === 'obras') {
       workDays.forEach((d) => { t += d.hours * d.rate; });
     }
     displacements.forEach((d) => { t += d.amount; });
     extraHours.forEach((h) => { t += h.hours * h.rate; });
     otherItems.forEach((o) => { t += o.quantity * o.unit_price; });
+    extraPersonnel.forEach((e) => { t += Number(e.amountTtc) || 0; });
     return t;
   })();
 
@@ -414,7 +651,11 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               <Tip text="Selecione o cliente. Os locais de trabalho registados aparecerão abaixo." />
               <select
                 value={clientId}
-                onChange={(e) => { setClientId(e.target.value); setApartmentBlocks([{ key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]); }}
+                onChange={(e) => {
+                  setClientId(e.target.value);
+                  setApartmentBlocks([emptyApartmentBlock()]);
+                  setCaveTasks(emptyCaveTasks());
+                }}
                 required={mode === 'property'}
                 className={`${INPUT} mt-2`}
               >
@@ -653,7 +894,167 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                         </div>
                       ))}
                       <button type="button" onClick={() => addExtraDate(block.key)} className="text-emerald-600 hover:underline text-xs flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar data (extra)
+                        <Plus className="w-3.5 h-3.5" /> Ajouter une date (extra)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Ménage pendant le séjour */}
+                  <div className="rounded-lg border border-sky-200 overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-sky-50 border-b border-sky-100 flex-wrap">
+                      <Plane className="w-3.5 h-3.5 text-sky-700" />
+                      <span className="text-xs font-semibold text-sky-900">{FR.menageSejour}</span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {block.stayCleanings.length === 0 && (
+                        <p className="text-xs text-slate-400 italic">Aucune intervention pendant le séjour.</p>
+                      )}
+                      {block.stayCleanings.map((entry, i) => (
+                        <div key={i} className="grid grid-cols-12 gap-2 items-end border border-sky-50 rounded-lg p-2 bg-white">
+                          <div className="col-span-3">
+                            <label className="block text-xs text-slate-500 mb-0.5">Date</label>
+                            <input
+                              type="date"
+                              value={entry.date}
+                              onChange={(e) => updateStayCleaning(block.key, i, 'date', e.target.value)}
+                              className={INPUT}
+                            />
+                          </div>
+                          <div className="col-span-4">
+                            <label className="block text-xs text-slate-500 mb-0.5">Description</label>
+                            <input
+                              value={entry.description}
+                              onChange={(e) => updateStayCleaning(block.key, i, 'description', e.target.value)}
+                              placeholder="Ex: urgence chauffage…"
+                              className={INPUT}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-xs text-slate-500 mb-0.5">Heures</label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              value={entry.hours}
+                              onChange={(e) =>
+                                updateStayCleaning(block.key, i, 'hours', parseFloat(e.target.value) || 0)
+                              }
+                              className={INPUT}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-xs text-slate-500 mb-0.5">Montant TTC (€)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={entry.amountTtc || ''}
+                              onChange={(e) =>
+                                updateStayCleaning(block.key, i, 'amountTtc', parseFloat(e.target.value) || 0)
+                              }
+                              className={INPUT}
+                            />
+                          </div>
+                          <div className="col-span-1 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => removeStayCleaning(block.key, i)}
+                              className="p-1.5 text-red-400 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addStayCleaning(block.key)}
+                        disabled={!prop}
+                        className="text-sky-700 hover:underline text-xs flex items-center gap-1 disabled:opacity-40"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Ajouter {FR.menageSejour.toLowerCase()}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Déplacement (forfait 20 € · 1 h) */}
+                  <div className="rounded-lg border border-amber-200 overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border-b border-amber-100 flex-wrap">
+                      <Car className="w-3.5 h-3.5 text-amber-800" />
+                      <span className="text-xs font-semibold text-amber-900">{FR.deplacement}</span>
+                      <span className="text-xs text-amber-700">
+                        — {TARIF.deplacementHeures} h · {TARIF.deplacementTtc.toFixed(2)} € TTC (forfait)
+                      </span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {block.apartmentDisplacements.map((entry, i) => (
+                        <div
+                          key={i}
+                          className="rounded-lg border border-amber-100 bg-white p-2 space-y-2"
+                        >
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={entry.enabled}
+                              onChange={(e) =>
+                                updateApartmentDisplacement(block.key, i, 'enabled', e.target.checked)
+                              }
+                              className="rounded border-amber-400 text-primary-600"
+                            />
+                            <span className="text-xs font-medium text-amber-900">
+                              Déplacement effectué
+                            </span>
+                            {entry.enabled && (
+                              <span className="text-xs text-amber-600 ml-auto">
+                                {TARIF.deplacementTtc.toFixed(2)} € TTC
+                              </span>
+                            )}
+                          </label>
+                          {entry.enabled && (
+                            <div className="grid grid-cols-12 gap-2 items-end">
+                              <div className="col-span-4">
+                                <label className="block text-xs text-slate-500 mb-0.5">Date</label>
+                                <input
+                                  type="date"
+                                  value={entry.date}
+                                  onChange={(e) =>
+                                    updateApartmentDisplacement(block.key, i, 'date', e.target.value)
+                                  }
+                                  className={INPUT}
+                                />
+                              </div>
+                              <div className="col-span-7">
+                                <label className="block text-xs text-slate-500 mb-0.5">Motif</label>
+                                <input
+                                  value={entry.description}
+                                  onChange={(e) =>
+                                    updateApartmentDisplacement(block.key, i, 'description', e.target.value)
+                                  }
+                                  placeholder="Ex: livraison, urgence…"
+                                  className={INPUT}
+                                />
+                              </div>
+                              <div className="col-span-1 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => removeApartmentDisplacement(block.key, i)}
+                                  disabled={block.apartmentDisplacements.length === 1}
+                                  className="p-1.5 text-red-400 hover:bg-red-50 rounded disabled:opacity-30"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addApartmentDisplacement(block.key)}
+                        disabled={!prop}
+                        className="text-amber-800 hover:underline text-xs flex items-center gap-1 disabled:opacity-40"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Ajouter un autre déplacement
                       </button>
                     </div>
                   </div>
@@ -753,6 +1154,27 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
             </button>
           </div>
         </div>
+      )}
+
+      {mode === 'property' && billingClientId && (
+        <CaveTasksSection caves={caveTasks} onChange={setCaveTasks} />
+      )}
+
+      {billingClientId && (
+        <ExtraPersonnelSection
+          properties={billingProperties}
+          entries={extraPersonnel}
+          isVeryStay={isVeryStayInvoiceContext(
+            clients.find((c) => c.id === billingClientId)?.company_name,
+            billingProperties
+          )}
+          onAddEntry={addExtraPersonnelEntry}
+          onRemoveEntry={removeExtraPersonnelEntry}
+          onUpdateAmount={updateExtraPersonnelAmount}
+          onAddAssignment={addPersonnelAssignment}
+          onRemoveAssignment={removePersonnelAssignment}
+          onUpdateAssignment={updatePersonnelAssignment}
+        />
       )}
 
       {/* ── Deslocamentos ── */}
