@@ -7,6 +7,9 @@ import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info } from 'lucide-react';
 import { invoiceSchema } from '@/lib/validations/schemas';
+import { getNormalCleaningLabel, isVeryStayClient } from '@/lib/cleaning-labels';
+import { getVeryStayPropertyVisual } from '@/lib/verystay-property-visuals';
+import { VeryStayColorLegend, VeryStayPropertyPicker } from '@/components/invoices/VeryStayPropertyPicker';
 
 interface Client { id: string; company_name: string; email: string | null; }
 interface Property {
@@ -127,6 +130,8 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   }, [invoice, initialNextNumber]);
 
   const clientApartments = properties.filter((p) => p.client_id === clientId);
+  const selectedClient = clients.find((c) => c.id === clientId);
+  const isVeryStay = isVeryStayClient(selectedClient?.company_name);
 
   function addApartmentBlock() {
     setApartmentBlocks((prev) => [...prev, { key: newKey(), propertyId: '', normalDates: [], extraDates: [] }]);
@@ -195,12 +200,15 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         const aptName = prop?.name ?? '';
         const normalPrice = Number(prop?.normal_price ?? 0);
         const extraPrice = Number(prop?.extra_price ?? 0);
+        const propClient = prop ? clients.find((c) => c.id === prop.client_id) : selectedClient;
+        const clientLabelName = propClient?.company_name ?? selectedClient?.company_name;
         const validNormal = block.normalDates.filter((d) => d.date);
         if (validNormal.length > 0) {
           const dateList = validNormal.map((d) => formatDateLabel(d.date)).join(', ');
+          const lineLabel = getNormalCleaningLabel(clientLabelName);
           items.push({
             service_id: null,
-            description: aptName ? `Nettoyage standard — ${aptName} — ${dateList}` : `Nettoyage standard — ${dateList}`,
+            description: aptName ? `${lineLabel} — ${aptName} — ${dateList}` : `${lineLabel} — ${dateList}`,
             quantity: validNormal.length,
             unit_price: normalPrice,
           });
@@ -208,9 +216,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         const validExtra = block.extraDates.filter((d) => d.date);
         if (validExtra.length > 0) {
           const dateList = validExtra.map((d) => formatDateLabel(d.date)).join(', ');
+          const extraLabel = isVeryStayClient(clientLabelName)
+            ? 'Ménage extra'
+            : 'Nettoyage extra';
           items.push({
             service_id: null,
-            description: aptName ? `Nettoyage extra — ${aptName} — ${dateList}` : `Nettoyage extra — ${dateList}`,
+            description: aptName ? `${extraLabel} — ${aptName} — ${dateList}` : `${extraLabel} — ${dateList}`,
             quantity: validExtra.length,
             unit_price: extraPrice,
           });
@@ -474,21 +485,32 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       </div>
 
       {/* ── Blocos de imóveis (modo limpeza) ── */}
+      {mode === 'property' && isVeryStay && clientId && clientApartments.length > 0 && (
+        <VeryStayColorLegend properties={clientApartments} />
+      )}
+
       {mode === 'property' && (
         <>
           {apartmentBlocks.map((block, blockIndex) => {
             const prop = properties.find((p) => p.id === block.propertyId);
+            const visual = prop ? getVeryStayPropertyVisual(prop.name) : null;
             const normalPrice = Number(prop?.normal_price ?? 0);
             const extraPrice = Number(prop?.extra_price ?? 0);
             const validNormal = block.normalDates.filter((d) => d.date);
             const validExtra = block.extraDates.filter((d) => d.date);
-
+            const blockBorder = isVeryStay && visual ? visual.headerBorder : 'border-primary-200';
+            const blockHeaderBg = isVeryStay && visual ? visual.headerBg : 'bg-primary-50';
+            const blockHeaderText = isVeryStay && visual ? visual.headerText : 'text-primary-800';
             return (
-              <div key={block.key} className="bg-white rounded-xl border border-primary-200 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 bg-primary-50 border-b border-primary-100">
+              <div key={block.key} className={`bg-white rounded-xl border-2 ${blockBorder} shadow-sm overflow-hidden`}>
+                <div className={`flex items-center justify-between px-4 py-3 ${blockHeaderBg} border-b ${blockBorder}`}>
                   <div className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-primary-700" />
-                    <span className="font-semibold text-sm text-primary-800">
+                    {isVeryStay && visual ? (
+                      <span className="text-lg leading-none" aria-hidden>{visual.emoji}</span>
+                    ) : (
+                      <Building2 className="w-4 h-4 text-primary-700" />
+                    )}
+                    <span className={`font-semibold text-sm ${blockHeaderText}`}>
                       Local {blockIndex + 1}{prop ? ` — ${prop.name}` : ''}
                     </span>
                   </div>
@@ -515,6 +537,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                         Nenhum local cadastrado para este cliente.{' '}
                         <Link href="/properties/new" className="underline font-medium">Criar local</Link>.
                       </p>
+                    ) : isVeryStay ? (
+                      <VeryStayPropertyPicker
+                        properties={clientApartments}
+                        value={block.propertyId}
+                        onChange={(id) => updateBlockProperty(block.key, id)}
+                      />
                     ) : (
                       <select
                         value={block.propertyId}
@@ -537,11 +565,19 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                   </div>
 
                   {/* Limpezas normais */}
-                  <div className="rounded-lg border border-blue-100 overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border-b border-blue-100">
-                      <CalendarDays className="w-3.5 h-3.5 text-blue-700" />
-                      <span className="text-xs font-semibold text-blue-800">Limpezas normais</span>
-                      <span className="text-xs text-blue-600 ml-1">— clique em "Adicionar data" para cada dia trabalhado</span>
+                  <div className={`rounded-lg border overflow-hidden ${isVeryStay && visual ? visual.normalBorder : 'border-blue-100'}`}>
+                    <div className={`flex items-center gap-2 px-3 py-2 border-b flex-wrap ${isVeryStay && visual ? `${visual.normalBg} ${visual.normalBorder}` : 'bg-blue-50 border-blue-100'}`}>
+                      {isVeryStay && visual ? (
+                        <span className="text-base leading-none" aria-hidden>{visual.emoji}</span>
+                      ) : (
+                        <CalendarDays className="w-3.5 h-3.5 text-blue-700" />
+                      )}
+                      <span className={`text-xs font-semibold ${isVeryStay && visual ? visual.normalHeaderText : 'text-blue-800'}`}>
+                        {isVeryStay ? 'Ménage classique' : 'Limpezas normais'}
+                      </span>
+                      <span className={`text-xs ml-1 ${isVeryStay && visual ? visual.normalHeaderText : 'text-blue-600'} opacity-80`}>
+                        — clique em &quot;Adicionar data&quot; para cada dia trabalhado
+                      </span>
                       {validNormal.length > 0 && prop && (
                         <span className="ml-auto text-xs text-blue-700 font-medium">
                           {validNormal.length} × {normalPrice.toFixed(2)} € = <strong>{(validNormal.length * normalPrice).toFixed(2)} €</strong>
@@ -574,11 +610,19 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                   </div>
 
                   {/* Limpezas extra */}
-                  <div className="rounded-lg border border-emerald-100 overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border-b border-emerald-100">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                      <span className="text-xs font-semibold text-emerald-800">Limpezas extra</span>
-                      <span className="text-xs text-emerald-600 ml-1">— limpeza mais profunda com valor diferenciado</span>
+                  <div className={`rounded-lg border overflow-hidden ${isVeryStay && visual ? visual.extraBorder : 'border-emerald-100'}`}>
+                    <div className={`flex items-center gap-2 px-3 py-2 border-b flex-wrap ${isVeryStay && visual ? `${visual.extraBg} ${visual.extraBorder}` : 'bg-emerald-50 border-emerald-100'}`}>
+                      {isVeryStay && visual ? (
+                        <span className="text-base leading-none" aria-hidden>{visual.emojiExtra}</span>
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                      )}
+                      <span className={`text-xs font-semibold ${isVeryStay && visual ? visual.extraHeaderText : 'text-emerald-800'}`}>
+                        {isVeryStay ? 'Ménage extra' : 'Limpezas extra'}
+                      </span>
+                      <span className={`text-xs ml-1 ${isVeryStay && visual ? visual.extraHeaderText : 'text-emerald-600'} opacity-80`}>
+                        — limpeza mais profunda com valor diferenciado
+                      </span>
                       {validExtra.length > 0 && prop && (
                         <span className="ml-auto text-xs text-emerald-700 font-medium">
                           {validExtra.length} × {extraPrice.toFixed(2)} € = <strong>{(validExtra.length * extraPrice).toFixed(2)} €</strong>
