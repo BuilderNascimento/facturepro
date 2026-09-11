@@ -42,6 +42,8 @@ interface DisplacementEntry { description: string; amount: number; }
 interface ExtraHourEntry { description: string; hours: number; rate: number; }
 interface OtherItem { description: string; quantity: number; unit_price: number; }
 interface WorkDayEntry { date: string; description: string; hours: number; rate: number; }
+/** Forfait global (peinture, manutention…) — sem detalhe de horas */
+interface ForfaitEntry { description: string; quantity: number; unit_price: number; }
 
 interface ApartmentBlock {
   key: string;
@@ -133,6 +135,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [extraHours, setExtraHours] = useState<ExtraHourEntry[]>([]);
   const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
   const [workDays, setWorkDays] = useState<WorkDayEntry[]>([{ date: '', description: '', hours: 8, rate: 0 }]);
+  const [forfaits, setForfaits] = useState<ForfaitEntry[]>([]);
   const [extraPersonnel, setExtraPersonnel] = useState<ExtraPersonnelEntryInput[]>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -294,6 +297,12 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   function removeWorkDay(i: number) { setWorkDays((p) => p.filter((_, idx) => idx !== i)); }
   function updateWorkDay(i: number, field: keyof WorkDayEntry, value: string | number) {
     setWorkDays((p) => { const n = [...p]; n[i] = { ...n[i], [field]: value }; return n; });
+  }
+
+  function addForfait() { setForfaits((p) => [...p, { description: '', quantity: 1, unit_price: 0 }]); }
+  function removeForfait(i: number) { setForfaits((p) => p.filter((_, idx) => idx !== i)); }
+  function updateForfait(i: number, field: keyof ForfaitEntry, value: string | number) {
+    setForfaits((p) => { const n = [...p]; n[i] = { ...n[i], [field]: value }; return n; });
   }
 
   function addExtraPersonnelEntry() {
@@ -463,6 +472,16 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           });
         }
       });
+      forfaits.forEach((f) => {
+        if (!f.description.trim()) return;
+        if (!(f.quantity > 0) && !(f.unit_price > 0)) return;
+        items.push({
+          service_id: null,
+          description: f.description.trim(),
+          quantity: f.quantity > 0 ? f.quantity : 1,
+          unit_price: Number(f.unit_price) || 0,
+        });
+      });
     }
 
     displacements.forEach((d) => {
@@ -525,6 +544,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     if (caveTasks.papin.enabled && caveTasks.papin.date) t += TARIF.caveTtc;
     if (mode === 'obras') {
       workDays.forEach((d) => { t += d.hours * d.rate; });
+      forfaits.forEach((f) => { t += (Number(f.quantity) || 0) * (Number(f.unit_price) || 0); });
     }
     displacements.forEach((d) => { t += d.amount; });
     extraHours.forEach((h) => { t += h.hours * h.rate; });
@@ -1076,82 +1096,152 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </>
       )}
 
-      {/* ── Obras / Diárias ── */}
+      {/* ── Obras : diárias (horas) + forfait global ── */}
       {mode === 'obras' && (
-        <div className="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
-          <SectionHeader
-            icon={<HardHat className="w-4 h-4 text-orange-700" />}
-            title="Diárias de trabalho"
-            color="bg-orange-50 border-b border-orange-100"
-            tooltip="Cada linha = um dia ou período de trabalho"
-          />
-          <div className="p-4 space-y-1">
-            <p className="text-xs text-slate-500 mb-3">
-              <Info className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
-              Adicione uma linha por dia trabalhado. Coloque a data, o que foi feito, as horas e o valor daquele dia.
-            </p>
-            {workDays.map((day, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-end border border-slate-100 rounded-lg p-3 bg-slate-50">
-                <div className="col-span-3">
-                  <label className="block text-xs text-slate-500 mb-0.5">Data</label>
-                  <input
-                    type="date"
-                    value={day.date}
-                    onChange={(e) => updateWorkDay(i, 'date', e.target.value)}
-                    className={INPUT}
-                  />
-                </div>
-                <div className="col-span-4">
-                  <label className="block text-xs text-slate-500 mb-0.5">O que foi feito</label>
-                  <input
-                    value={day.description}
-                    onChange={(e) => updateWorkDay(i, 'description', e.target.value)}
-                    placeholder="Ex: Pintura sala, demolição…"
-                    className={INPUT}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-0.5">Horas</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    value={day.hours}
-                    onChange={(e) => updateWorkDay(i, 'hours', parseFloat(e.target.value) || 0)}
-                    className={INPUT}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-0.5">Valor do dia (€)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={day.rate}
-                    onChange={(e) => updateWorkDay(i, 'rate', parseFloat(e.target.value) || 0)}
-                    className={INPUT}
-                  />
-                </div>
-                <div className="col-span-1 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => removeWorkDay(i)}
-                    disabled={workDays.length === 1}
-                    className="p-1.5 text-red-400 hover:bg-red-50 rounded disabled:opacity-30"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                {day.hours > 0 && day.rate > 0 && (
-                  <div className="col-span-12 text-right text-xs text-orange-700 font-medium -mt-1">
-                    Subtotal: {(day.hours * day.rate).toFixed(2)} €
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
+            <SectionHeader
+              icon={<HardHat className="w-4 h-4 text-orange-700" />}
+              title="Modelo 1 — Diárias (com horas)"
+              color="bg-orange-50 border-b border-orange-100"
+              tooltip="Cada linha = um dia ou período de trabalho"
+            />
+            <div className="p-4 space-y-1">
+              <p className="text-xs text-slate-500 mb-3">
+                <Info className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
+                Adicione uma linha por dia trabalhado. Coloque a data, o que foi feito, as horas e o valor daquele dia.
+              </p>
+              {workDays.map((day, i) => (
+                <div key={i} className="grid grid-cols-12 gap-2 items-end border border-slate-100 rounded-lg p-3 bg-slate-50">
+                  <div className="col-span-3">
+                    <label className="block text-xs text-slate-500 mb-0.5">Data</label>
+                    <input
+                      type="date"
+                      value={day.date}
+                      onChange={(e) => updateWorkDay(i, 'date', e.target.value)}
+                      className={INPUT}
+                    />
                   </div>
-                )}
-              </div>
-            ))}
-            <button type="button" onClick={addWorkDay} className="text-orange-700 hover:underline text-sm flex items-center gap-1 mt-2">
-              <Plus className="w-4 h-4" /> Adicionar dia de trabalho
-            </button>
+                  <div className="col-span-4">
+                    <label className="block text-xs text-slate-500 mb-0.5">O que foi feito</label>
+                    <input
+                      value={day.description}
+                      onChange={(e) => updateWorkDay(i, 'description', e.target.value)}
+                      placeholder="Ex: Pintura sala, demolição…"
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Horas</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      value={day.hours}
+                      onChange={(e) => updateWorkDay(i, 'hours', parseFloat(e.target.value) || 0)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Valor do dia (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={day.rate}
+                      onChange={(e) => updateWorkDay(i, 'rate', parseFloat(e.target.value) || 0)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeWorkDay(i)}
+                      disabled={workDays.length === 1 && forfaits.length === 0}
+                      className="p-1.5 text-red-400 hover:bg-red-50 rounded disabled:opacity-30"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {day.hours > 0 && day.rate > 0 && (
+                    <div className="col-span-12 text-right text-xs text-orange-700 font-medium -mt-1">
+                      Subtotal: {(day.hours * day.rate).toFixed(2)} €
+                    </div>
+                  )}
+                </div>
+              ))}
+              <button type="button" onClick={addWorkDay} className="text-orange-700 hover:underline text-sm flex items-center gap-1 mt-2">
+                <Plus className="w-4 h-4" /> Adicionar dia de trabalho
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-violet-200 shadow-sm overflow-hidden">
+            <SectionHeader
+              icon={<Package className="w-4 h-4 text-violet-700" />}
+              title="Modelo 2 — Forfait global"
+              color="bg-violet-50 border-b border-violet-100"
+              tooltip="Sem detalhe de horas — peinture, manutention, pose…"
+            />
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-slate-500">
+                <Info className="w-3.5 h-3.5 inline mr-1 text-slate-400" />
+                Forfait fechado: só a designação, quantidade e preço unitário HT. Ex.: <em>POSE ADH - DECOPHANIE</em> · 2,2 × 200 €.
+              </p>
+              {forfaits.length === 0 && (
+                <p className="text-xs text-slate-400 italic">Nenhum forfait. Clique abaixo se o cliente pedir valor global (sem horas).</p>
+              )}
+              {forfaits.map((f, i) => (
+                <div key={i} className="grid grid-cols-12 gap-2 items-end border border-violet-100 rounded-lg p-3 bg-violet-50/40">
+                  <div className="col-span-5">
+                    <label className="block text-xs text-slate-500 mb-0.5">Désignation</label>
+                    <input
+                      value={f.description}
+                      onChange={(e) => updateForfait(i, 'description', e.target.value)}
+                      placeholder="Ex: POSE ADH - DECOPHANIE"
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Quantité</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={f.quantity}
+                      onChange={(e) => updateForfait(i, 'quantity', parseFloat(e.target.value) || 0)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <label className="block text-xs text-slate-500 mb-0.5">Prix unitaire HT (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={f.unit_price || ''}
+                      onChange={(e) => updateForfait(i, 'unit_price', parseFloat(e.target.value) || 0)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-1 text-right text-xs font-medium text-violet-800 pb-2">
+                    {(f.quantity * f.unit_price).toFixed(2)} €
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeForfait(i)}
+                      className="p-1.5 text-red-400 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addForfait} className="text-violet-700 hover:underline text-sm flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Ajouter un forfait
+              </button>
+            </div>
           </div>
         </div>
       )}
