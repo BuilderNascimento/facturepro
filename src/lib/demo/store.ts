@@ -172,6 +172,13 @@ export function storeGetInvoice(id: string): (Invoice & { clients: Client | null
   };
 }
 
+export function storePeekNextInvoiceNumber(): string {
+  const store = loadStore();
+  const year = new Date().getFullYear();
+  const current = store.invoice_sequence[year] ?? 0;
+  return `${year}-${String(current + 1).padStart(4, '0')}`;
+}
+
 export function storeGetNextInvoiceNumber(): string {
   const store = loadStore();
   const year = new Date().getFullYear();

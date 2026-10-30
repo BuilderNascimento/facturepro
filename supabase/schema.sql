@@ -47,68 +47,80 @@ CREATE TABLE services (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabela: invoice_sequence (para número sequencial anual transacional)
-CREATE TABLE invoice_sequence (
-  year INTEGER PRIMARY KEY,
-  last_number INTEGER NOT NULL DEFAULT 0
+-- Sequência de fatura por utilizador + ano (não global)
+CREATE TABLE invoice_sequence_user (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  last_number INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, year)
 );
 
--- Função para obter próximo número de fatura (transacional, sem duplicação)
+-- Incrementa só na criação real da fatura
 CREATE OR REPLACE FUNCTION get_next_invoice_number()
 RETURNS TEXT
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
+  uid UUID := auth.uid();
   current_year INTEGER;
   next_num INTEGER;
-  result TEXT;
 BEGIN
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
   current_year := EXTRACT(YEAR FROM CURRENT_DATE)::INTEGER;
 
-  INSERT INTO invoice_sequence (year, last_number)
-  VALUES (current_year, 1)
-  ON CONFLICT (year) DO UPDATE SET last_number = invoice_sequence.last_number + 1
-  RETURNING (invoice_sequence.last_number) INTO next_num;
+  INSERT INTO invoice_sequence_user (user_id, year, last_number)
+  VALUES (uid, current_year, 0)
+  ON CONFLICT (user_id, year) DO NOTHING;
 
-  -- Se ON CONFLICT retornou a linha atualizada, precisamos do valor correto
-  SELECT last_number INTO next_num FROM invoice_sequence WHERE year = current_year;
+  UPDATE invoice_sequence_user
+  SET last_number = last_number + 1
+  WHERE user_id = uid AND year = current_year
+  RETURNING last_number INTO next_num;
 
-  result := current_year::TEXT || '-' || LPAD(next_num::TEXT, 4, '0');
-  RETURN result;
+  RETURN current_year::TEXT || '-' || LPAD(next_num::TEXT, 4, '0');
 END;
 $$;
 
--- Ajuste: a função acima com RETURNING pode não retornar o valor após incremento.
--- Versão corrigida usando SELECT FOR UPDATE:
-CREATE OR REPLACE FUNCTION get_next_invoice_number()
+-- Preview sem consumir o número (formulário "Nova fatura")
+CREATE OR REPLACE FUNCTION peek_next_invoice_number()
 RETURNS TEXT
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
+  uid UUID := auth.uid();
   current_year INTEGER;
-  next_num INTEGER;
-  result TEXT;
+  last_num INTEGER;
 BEGIN
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
   current_year := EXTRACT(YEAR FROM CURRENT_DATE)::INTEGER;
 
-  INSERT INTO invoice_sequence (year, last_number)
-  VALUES (current_year, 0)
-  ON CONFLICT (year) DO NOTHING;
+  SELECT last_number INTO last_num
+  FROM invoice_sequence_user
+  WHERE user_id = uid AND year = current_year;
 
-  UPDATE invoice_sequence
-  SET last_number = last_number + 1
-  WHERE year = current_year
-  RETURNING last_number INTO next_num;
+  IF last_num IS NULL THEN
+    last_num := 0;
+  END IF;
 
-  result := current_year::TEXT || '-' || LPAD(next_num::TEXT, 4, '0');
-  RETURN result;
+  RETURN current_year::TEXT || '-' || LPAD((last_num + 1)::TEXT, 4, '0');
 END;
 $$;
 
 -- Tabela: invoices
 CREATE TABLE invoices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  invoice_number TEXT NOT NULL UNIQUE,
+  invoice_number TEXT NOT NULL,
+  -- UNIQUE (user_id, invoice_number) — ver migração per-user (vários users podem ter 2026-0001)
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
   issue_date DATE NOT NULL,
   due_date DATE NOT NULL,
@@ -158,7 +170,7 @@ CREATE INDEX idx_invoice_items_invoice_id ON invoice_items(invoice_id);
 ALTER TABLE company_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoice_sequence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_sequence_user ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 
@@ -172,8 +184,8 @@ CREATE POLICY "Authenticated full access clients" ON clients
 CREATE POLICY "Authenticated full access services" ON services
   FOR ALL USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Authenticated full access invoice_sequence" ON invoice_sequence
-  FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Users manage own invoice sequence" ON invoice_sequence_user
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Authenticated full access invoices" ON invoices
   FOR ALL USING (auth.role() = 'authenticated');

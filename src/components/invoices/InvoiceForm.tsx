@@ -20,6 +20,7 @@ import {
   buildExtraPersonnelDescription,
   type ExtraPersonnelEntryInput,
 } from '@/lib/extra-personnel';
+import { encodeFactureLine, type FactureKind } from '@/lib/facture-lines';
 import { invoiceSchema } from '@/lib/validations/schemas';
 import { getNormalCleaningLabel, isVeryStayClient, isVeryStayInvoiceContext } from '@/lib/cleaning-labels';
 import { formatPropertyOptionLabel, getVeryStayPropertyVisual } from '@/lib/verystay-property-visuals';
@@ -45,11 +46,11 @@ interface WorkDayEntry { date: string; description: string; hours: number; rate:
 /** Forfait global (peinture, manutention…) — sem detalhe de horas */
 interface ForfaitEntry { description: string; quantity: number; unit_price: number; }
 
-/** Mode Facture — Ménage / Pick-up (texte libre) */
+/** Mode Facture — colonnes Date / Heure / Nom / Local / Montant */
 interface FactureServiceLine {
   key: string;
   date: string;
-  label: string;
+  local: string;
   startTime: string;
   endTime: string;
   amount: number;
@@ -59,25 +60,34 @@ function emptyFactureLine(): FactureServiceLine {
   return {
     key: `fl-${++personnelCounter}`,
     date: '',
-    label: '',
+    local: '',
     startTime: '',
     endTime: '',
     amount: 0,
   };
 }
 
-function formatFactureLineDescription(
-  kind: 'Ménage' | 'Pick-up',
-  line: FactureServiceLine
-): string {
-  const dateLabel = line.date ? formatDateLabel(line.date) : '';
-  const hours =
-    line.startTime || line.endTime
-      ? `${line.startTime || '—'}${line.endTime ? ` – ${line.endTime}` : ''}`
-      : '';
-  return [kind, line.label.trim() || null, dateLabel || null, hours || null]
-    .filter(Boolean)
-    .join(' — ');
+function pushFactureItems(
+  items: { service_id: null; description: string; quantity: number; unit_price: number }[],
+  kind: FactureKind,
+  lines: FactureServiceLine[]
+) {
+  lines.forEach((line) => {
+    if (!line.local.trim() && !line.date && !(line.amount > 0)) return;
+    if (!line.local.trim() && !(line.amount > 0)) return;
+    items.push({
+      service_id: null,
+      description: encodeFactureLine(kind, {
+        date: line.date,
+        local: line.local.trim(),
+        startTime: line.startTime,
+        endTime: line.endTime,
+        amount: Number(line.amount) || 0,
+      }),
+      quantity: 1,
+      unit_price: Number(line.amount) || 0,
+    });
+  });
 }
 
 interface ApartmentBlock {
@@ -172,6 +182,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [workDays, setWorkDays] = useState<WorkDayEntry[]>([{ date: '', description: '', hours: 8, rate: 0 }]);
   const [forfaits, setForfaits] = useState<ForfaitEntry[]>([]);
   const [menageLines, setMenageLines] = useState<FactureServiceLine[]>([emptyFactureLine()]);
+  const [accueilLines, setAccueilLines] = useState<FactureServiceLine[]>([emptyFactureLine()]);
   const [pickupLines, setPickupLines] = useState<FactureServiceLine[]>([emptyFactureLine()]);
   const [extraPersonnel, setExtraPersonnel] = useState<ExtraPersonnelEntryInput[]>([]);
 
@@ -188,7 +199,8 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
   useEffect(() => {
     if (!invoice && !initialNextNumber) {
-      fetch('/api/invoices/next-number', { method: 'POST' })
+      // GET = preview apenas (não consome o número; o incremento só acontece ao criar)
+      fetch('/api/invoices/next-number')
         .then((r) => r.json())
         .then((d) => d.invoice_number && setNextNumber(d.invoice_number))
         .catch(() => {});
@@ -357,6 +369,10 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   function addMenageLine() { setMenageLines((p) => [...p, emptyFactureLine()]); }
   function removeMenageLine(i: number) {
     setMenageLines((p) => (p.length <= 1 ? [emptyFactureLine()] : p.filter((_, idx) => idx !== i)));
+  }
+  function addAccueilLine() { setAccueilLines((p) => [...p, emptyFactureLine()]); }
+  function removeAccueilLine(i: number) {
+    setAccueilLines((p) => (p.length <= 1 ? [emptyFactureLine()] : p.filter((_, idx) => idx !== i)));
   }
   function addPickupLine() { setPickupLines((p) => [...p, emptyFactureLine()]); }
   function removePickupLine(i: number) {
@@ -543,26 +559,9 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     }
 
     if (mode === 'facture') {
-      menageLines.forEach((line) => {
-        if (!line.label.trim() && !line.date && !(line.amount > 0)) return;
-        if (!line.label.trim() && !(line.amount > 0)) return;
-        items.push({
-          service_id: null,
-          description: formatFactureLineDescription('Ménage', line),
-          quantity: 1,
-          unit_price: Number(line.amount) || 0,
-        });
-      });
-      pickupLines.forEach((line) => {
-        if (!line.label.trim() && !line.date && !(line.amount > 0)) return;
-        if (!line.label.trim() && !(line.amount > 0)) return;
-        items.push({
-          service_id: null,
-          description: formatFactureLineDescription('Pick-up', line),
-          quantity: 1,
-          unit_price: Number(line.amount) || 0,
-        });
-      });
+      pushFactureItems(items, 'Ménage', menageLines);
+      pushFactureItems(items, 'Accueil', accueilLines);
+      pushFactureItems(items, 'Pick-up', pickupLines);
     }
 
     displacements.forEach((d) => {
@@ -629,6 +628,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     }
     if (mode === 'facture') {
       menageLines.forEach((l) => { t += Number(l.amount) || 0; });
+      accueilLines.forEach((l) => { t += Number(l.amount) || 0; });
       pickupLines.forEach((l) => { t += Number(l.amount) || 0; });
     }
     displacements.forEach((d) => { t += d.amount; });
@@ -649,7 +649,7 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
     if (!items.length) {
       setError(
         mode === 'facture'
-          ? 'Ajoutez au moins une ligne (Ménage ou Pick-up).'
+          ? 'Ajoutez au moins une ligne (Ménage, Accueil ou Pick-up).'
           : 'Adicione pelo menos um item (limpeza, diária, deslocamento ou outro).'
       );
       return;
@@ -1344,180 +1344,134 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       )}
 
-      {/* ── Mode Facture : Ménage + Pick-up ── */}
+      {/* ── Mode Facture : Ménage + Accueil + Pick-up (colonnes PDF) ── */}
       {mode === 'facture' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
-            <SectionHeader
-              icon={<Sparkles className="w-4 h-4 text-sky-700" />}
-              title="1. Ménage"
-              color="bg-sky-50 border-b border-sky-100"
-              tooltip="Appartement (texte libre) · horaires · montant"
-            />
-            <div className="p-4 space-y-3">
-              <p className="text-xs text-slate-500">
-                Ajoutez une ligne par intervention. Nom de l&apos;appartement en texte libre, heure de début / fin et montant.
-              </p>
-              {menageLines.map((line, i) => (
-                <div
-                  key={line.key}
-                  className="grid grid-cols-12 gap-2 items-end border border-sky-100 rounded-lg p-3 bg-sky-50/40"
-                >
-                  <div className="col-span-12 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Date</label>
-                    <input
-                      type="date"
-                      value={line.date}
-                      onChange={(e) => updateFactureLine(setMenageLines, i, 'date', e.target.value)}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-12 sm:col-span-3">
-                    <label className="block text-xs text-slate-500 mb-0.5">Appartement</label>
-                    <input
-                      value={line.label}
-                      onChange={(e) => updateFactureLine(setMenageLines, i, 'label', e.target.value)}
-                      placeholder="Nom de l'appartement"
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-4 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Début</label>
-                    <input
-                      type="time"
-                      value={line.startTime}
-                      onChange={(e) => updateFactureLine(setMenageLines, i, 'startTime', e.target.value)}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-4 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Fin</label>
-                    <input
-                      type="time"
-                      value={line.endTime}
-                      onChange={(e) => updateFactureLine(setMenageLines, i, 'endTime', e.target.value)}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Montant (€)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={line.amount || ''}
-                      onChange={(e) =>
-                        updateFactureLine(setMenageLines, i, 'amount', parseFloat(e.target.value) || 0)
-                      }
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-1 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => removeMenageLine(i)}
-                      className="p-1.5 text-red-400 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addMenageLine}
-                className="text-sky-700 hover:underline text-sm flex items-center gap-1"
-              >
-                <Plus className="w-4 h-4" /> Ajouter une ligne
-              </button>
-            </div>
-          </div>
+          <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
+            Le PDF sortira en tableau : <strong>Date</strong> · <strong>Heure</strong> · <strong>Nom</strong> · <strong>Local</strong> · <strong>Montant</strong>
+          </p>
 
-          <div className="bg-white rounded-xl border border-teal-200 shadow-sm overflow-hidden">
-            <SectionHeader
-              icon={<Truck className="w-4 h-4 text-teal-700" />}
-              title="2. Pick-up"
-              color="bg-teal-50 border-b border-teal-100"
-              tooltip="Libellé (texte libre) · horaires · montant"
-            />
-            <div className="p-4 space-y-3">
-              <p className="text-xs text-slate-500">
-                Même structure : texte libre, heure de début / fin et montant. Une ligne par pick-up.
-              </p>
-              {pickupLines.map((line, i) => (
-                <div
-                  key={line.key}
-                  className="grid grid-cols-12 gap-2 items-end border border-teal-100 rounded-lg p-3 bg-teal-50/40"
+          {([
+            {
+              title: '1. Nettoyage / Ménage',
+              lines: menageLines,
+              setLines: setMenageLines,
+              add: addMenageLine,
+              remove: removeMenageLine,
+              border: 'border-sky-200',
+              header: 'bg-sky-50 border-b border-sky-100',
+              icon: <Sparkles className="w-4 h-4 text-sky-700" />,
+              btn: 'text-sky-700',
+              localPh: 'Ex: Canal St Martin Design',
+            },
+            {
+              title: '2. Accueil / Check-in',
+              lines: accueilLines,
+              setLines: setAccueilLines,
+              add: addAccueilLine,
+              remove: removeAccueilLine,
+              border: 'border-indigo-200',
+              header: 'bg-indigo-50 border-b border-indigo-100',
+              icon: <Building2 className="w-4 h-4 text-indigo-700" />,
+              btn: 'text-indigo-700',
+              localPh: 'Ex: Saint Germain Luxury',
+            },
+            {
+              title: '3. Pick-up / Récolte – Dépôt',
+              lines: pickupLines,
+              setLines: setPickupLines,
+              add: addPickupLine,
+              remove: removePickupLine,
+              border: 'border-teal-200',
+              header: 'bg-teal-50 border-b border-teal-100',
+              icon: <Truck className="w-4 h-4 text-teal-700" />,
+              btn: 'text-teal-700',
+              localPh: 'Ex: adresse ou appartement',
+            },
+          ] as const).map((section) => (
+            <div key={section.title} className={`bg-white rounded-xl border ${section.border} shadow-sm overflow-hidden`}>
+              <SectionHeader
+                icon={section.icon}
+                title={section.title}
+                color={section.header}
+                tooltip="Date · Heure · Local · Montant"
+              />
+              <div className="p-4 space-y-3">
+                {section.lines.map((line, i) => (
+                  <div
+                    key={line.key}
+                    className="grid grid-cols-12 gap-2 items-end border border-slate-100 rounded-lg p-3 bg-white"
+                  >
+                    <div className="col-span-12 sm:col-span-2">
+                      <label className="block text-xs text-slate-500 mb-0.5">Date</label>
+                      <input
+                        type="date"
+                        value={line.date}
+                        onChange={(e) => updateFactureLine(section.setLines, i, 'date', e.target.value)}
+                        className={INPUT}
+                      />
+                    </div>
+                    <div className="col-span-4 sm:col-span-2">
+                      <label className="block text-xs text-slate-500 mb-0.5">Heure début</label>
+                      <input
+                        type="time"
+                        value={line.startTime}
+                        onChange={(e) => updateFactureLine(section.setLines, i, 'startTime', e.target.value)}
+                        className={INPUT}
+                      />
+                    </div>
+                    <div className="col-span-4 sm:col-span-2">
+                      <label className="block text-xs text-slate-500 mb-0.5">Heure fin</label>
+                      <input
+                        type="time"
+                        value={line.endTime}
+                        onChange={(e) => updateFactureLine(section.setLines, i, 'endTime', e.target.value)}
+                        className={INPUT}
+                      />
+                    </div>
+                    <div className="col-span-12 sm:col-span-3">
+                      <label className="block text-xs text-slate-500 mb-0.5">Local</label>
+                      <input
+                        value={line.local}
+                        onChange={(e) => updateFactureLine(section.setLines, i, 'local', e.target.value)}
+                        placeholder={section.localPh}
+                        className={INPUT}
+                      />
+                    </div>
+                    <div className="col-span-3 sm:col-span-2">
+                      <label className="block text-xs text-slate-500 mb-0.5">Montant (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={line.amount || ''}
+                        onChange={(e) =>
+                          updateFactureLine(section.setLines, i, 'amount', parseFloat(e.target.value) || 0)
+                        }
+                        className={INPUT}
+                      />
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => section.remove(i)}
+                        className="p-1.5 text-red-400 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={section.add}
+                  className={`${section.btn} hover:underline text-sm flex items-center gap-1`}
                 >
-                  <div className="col-span-12 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Date</label>
-                    <input
-                      type="date"
-                      value={line.date}
-                      onChange={(e) => updateFactureLine(setPickupLines, i, 'date', e.target.value)}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-12 sm:col-span-3">
-                    <label className="block text-xs text-slate-500 mb-0.5">Libellé</label>
-                    <input
-                      value={line.label}
-                      onChange={(e) => updateFactureLine(setPickupLines, i, 'label', e.target.value)}
-                      placeholder="Ex: Pick-up aéroport, adresse…"
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-4 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Début</label>
-                    <input
-                      type="time"
-                      value={line.startTime}
-                      onChange={(e) => updateFactureLine(setPickupLines, i, 'startTime', e.target.value)}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-4 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Fin</label>
-                    <input
-                      type="time"
-                      value={line.endTime}
-                      onChange={(e) => updateFactureLine(setPickupLines, i, 'endTime', e.target.value)}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-3 sm:col-span-2">
-                    <label className="block text-xs text-slate-500 mb-0.5">Montant (€)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={line.amount || ''}
-                      onChange={(e) =>
-                        updateFactureLine(setPickupLines, i, 'amount', parseFloat(e.target.value) || 0)
-                      }
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="col-span-1 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => removePickupLine(i)}
-                      className="p-1.5 text-red-400 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addPickupLine}
-                className="text-teal-700 hover:underline text-sm flex items-center gap-1"
-              >
-                <Plus className="w-4 h-4" /> Ajouter une ligne
-              </button>
+                  <Plus className="w-4 h-4" /> Ajouter une ligne
+                </button>
+              </div>
             </div>
-          </div>
+          ))}
 
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <SectionHeader
@@ -1527,9 +1481,6 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               tooltip="Apparaît en bas de la facture PDF"
             />
             <div className="p-4">
-              <p className="text-xs text-slate-500 mb-2">
-                Notes libres affichées en bas de la facture (après le total, avant les conditions de règlement).
-              </p>
               <textarea
                 value={invoiceDescription}
                 onChange={(e) => setInvoiceDescription(e.target.value)}

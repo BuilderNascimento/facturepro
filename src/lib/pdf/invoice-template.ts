@@ -1,5 +1,7 @@
 import { isVeryStayInvoiceContext } from '@/lib/cleaning-labels';
+import { isFactureInvoiceItems } from '@/lib/facture-lines';
 import { extractPropertyNamesFromItems } from '@/lib/verystay-property-visuals';
+import { getFactureInvoiceHtml } from './facture-invoice-template';
 import { getObservationsHtml, getPaymentConditionsHtml } from './payment-conditions';
 import { getVeryStayInvoiceHtml } from './verystay-invoice-template';
 
@@ -84,6 +86,10 @@ function formatDescription(desc: string): string {
 }
 
 export function getInvoiceHtml(data: InvoicePdfData): string {
+  if (isFactureInvoiceItems(data.items)) {
+    return getFactureInvoiceHtml(data);
+  }
+
   if (
     isVeryStayInvoiceContext(
       data.client.company_name,
