@@ -1,7 +1,6 @@
 import type { InvoicePdfData } from './invoice-template';
 import { getObservationsHtml, getPaymentConditionsHtml } from './payment-conditions';
 import {
-  durationLabel,
   formatDateFr,
   formatHoursDisplay,
   parseFactureLine,
@@ -66,12 +65,10 @@ function renderSection(kind: FactureKind, rows: Row[]): string {
       subtotal += r.amount;
       const bg = idx % 2 === 0 ? '#ffffff' : '#f3f4f6';
       const heure = formatHoursDisplay(r.parsed.startTime, r.parsed.endTime);
-      const duree = durationLabel(r.parsed.startTime, r.parsed.endTime);
-      const heureCell = duree ? `${esc(heure)}<div style="font-size:10px;color:#6b7280">${esc(duree)}</div>` : esc(heure);
       return `
       <tr style="background:${bg}">
         <td style="border:1px solid #e5e7eb;padding:8px 10px;white-space:nowrap">${esc(formatDateFr(r.parsed.date))}</td>
-        <td style="border:1px solid #e5e7eb;padding:8px 10px;white-space:nowrap">${heureCell}</td>
+        <td style="border:1px solid #e5e7eb;padding:8px 10px;white-space:nowrap">${esc(heure)}</td>
         <td style="border:1px solid #e5e7eb;padding:8px 10px;font-weight:600">${esc(r.parsed.kind)}</td>
         <td style="border:1px solid #e5e7eb;padding:8px 10px">${esc(r.parsed.local || '—')}</td>
         <td style="border:1px solid #e5e7eb;padding:8px 10px;text-align:right;font-weight:600;white-space:nowrap">${fmtMoney(r.amount)}</td>
@@ -170,6 +167,7 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
     </div>`
     : '';
 
+  const legalText = c.legal_text_default || 'TVA non applicable, art. 293B du CGI';
   const observations = inv.description ? getObservationsHtml(inv.description) : '';
   const paymentConditions = getPaymentConditionsHtml();
 
@@ -246,6 +244,8 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
         <span>TOTAL TTC</span><span>${fmtMoney(Number(inv.total_ttc))}</span>
       </div>
     </div>
+
+    <p style="font-size:11px;color:#6b7280;margin-top:14px;line-height:1.5">${esc(legalText)}</p>
 
     ${bankBlock}
     ${observations}
