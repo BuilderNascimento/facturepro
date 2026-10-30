@@ -1,4 +1,5 @@
 import type { InvoicePdfData } from './invoice-template';
+import { getPaymentConditionsHtml } from './payment-conditions';
 
 type CompanyData = InvoicePdfData['company'];
 type ClientData = InvoicePdfData['client'];
@@ -201,12 +202,10 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
     .filter(Boolean)
     .join(' — ');
 
-  const defaultIndemnity =
-    "En cas de retard de paiement, sera exigible, conformément à l'article L 441-10 du Code de Commerce, une pénalité de retard de 10%, ainsi qu'une indemnité forfaitaire pour frais de recouvrement de 40€.";
-  const indemnityText = c.indemnity_text_default || defaultIndemnity;
   const legalText = c.legal_text_default || 'TVA non applicable, art. 293B du CGI';
   const hasBank = c.iban || c.bic || c.bank_name;
   const invoiceDescription = inv.description ? esc(inv.description) : '';
+  const paymentConditions = getPaymentConditionsHtml();
 
   const tableHead = `
     <thead>
@@ -391,17 +390,18 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
 
     <p style="font-size:11px;color:#6b7280;margin-top:16px;line-height:1.5">${esc(legalText)}</p>
     ${legalBar ? `<div style="background:#f1f5f9;border:1px solid #e5e7eb;border-radius:4px;padding:6px 10px;font-size:10px;color:#4b5563;margin-top:8px">${legalBar}</div>` : ''}
-    ${indemnityText ? `<p style="font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.5">${esc(indemnityText)}</p>` : ''}
 
     ${
       hasBank
-        ? `<div style="margin-top:20px;border:1px solid #e5e7eb;border-radius:6px;padding:12px 14px;font-size:12px">
+        ? `<div style="margin-top:16px;border:1px solid #e5e7eb;border-radius:6px;padding:12px 14px;font-size:12px">
       <strong>Paiement</strong> — Virement · Échéance ${fmtDate(inv.due_date)}
       ${c.iban ? `<div>IBAN : ${esc(c.iban)}</div>` : ''}
       ${c.bic ? `<div>BIC : ${esc(c.bic)}</div>` : ''}
     </div>`
         : ''
     }
+
+    ${paymentConditions}
   </div>
 </body>
 </html>`;
