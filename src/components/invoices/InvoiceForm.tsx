@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
-import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info, Plane } from 'lucide-react';
+import { Plus, Trash2, CalendarDays, Sparkles, Car, Clock, Package, Building2, X, HardHat, Info, Plane, FileText, Truck } from 'lucide-react';
 import { CaveTasksSection, emptyCaveTasks, type CaveTaskState } from '@/components/invoices/CaveTasksSection';
 import { ExtraPersonnelSection } from '@/components/invoices/ExtraPersonnelSection';
 import {
@@ -44,6 +44,41 @@ interface OtherItem { description: string; quantity: number; unit_price: number;
 interface WorkDayEntry { date: string; description: string; hours: number; rate: number; }
 /** Forfait global (peinture, manutention…) — sem detalhe de horas */
 interface ForfaitEntry { description: string; quantity: number; unit_price: number; }
+
+/** Mode Facture — Ménage / Pick-up (texte libre) */
+interface FactureServiceLine {
+  key: string;
+  date: string;
+  label: string;
+  startTime: string;
+  endTime: string;
+  amount: number;
+}
+
+function emptyFactureLine(): FactureServiceLine {
+  return {
+    key: `fl-${++personnelCounter}`,
+    date: '',
+    label: '',
+    startTime: '',
+    endTime: '',
+    amount: 0,
+  };
+}
+
+function formatFactureLineDescription(
+  kind: 'Ménage' | 'Pick-up',
+  line: FactureServiceLine
+): string {
+  const dateLabel = line.date ? formatDateLabel(line.date) : '';
+  const hours =
+    line.startTime || line.endTime
+      ? `${line.startTime || '—'}${line.endTime ? ` – ${line.endTime}` : ''}`
+      : '';
+  return [kind, line.label.trim() || null, dateLabel || null, hours || null]
+    .filter(Boolean)
+    .join(' — ');
+}
 
 interface ApartmentBlock {
   key: string;
@@ -111,7 +146,7 @@ let personnelCounter = 0;
 function newKey() { return `block-${++blockCounter}`; }
 function newPersonnelKey() { return `personnel-${++personnelCounter}`; }
 
-type Mode = 'property' | 'client' | 'obras';
+type Mode = 'property' | 'client' | 'obras' | 'facture';
 
 export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber: initialNextNumber }: InvoiceFormProps) {
   const router = useRouter();
@@ -136,6 +171,8 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
   const [workDays, setWorkDays] = useState<WorkDayEntry[]>([{ date: '', description: '', hours: 8, rate: 0 }]);
   const [forfaits, setForfaits] = useState<ForfaitEntry[]>([]);
+  const [menageLines, setMenageLines] = useState<FactureServiceLine[]>([emptyFactureLine()]);
+  const [pickupLines, setPickupLines] = useState<FactureServiceLine[]>([emptyFactureLine()]);
   const [extraPersonnel, setExtraPersonnel] = useState<ExtraPersonnelEntryInput[]>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -303,6 +340,27 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
   function removeForfait(i: number) { setForfaits((p) => p.filter((_, idx) => idx !== i)); }
   function updateForfait(i: number, field: keyof ForfaitEntry, value: string | number) {
     setForfaits((p) => { const n = [...p]; n[i] = { ...n[i], [field]: value }; return n; });
+  }
+
+  function updateFactureLine(
+    setter: React.Dispatch<React.SetStateAction<FactureServiceLine[]>>,
+    index: number,
+    field: keyof FactureServiceLine,
+    value: string | number
+  ) {
+    setter((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  }
+  function addMenageLine() { setMenageLines((p) => [...p, emptyFactureLine()]); }
+  function removeMenageLine(i: number) {
+    setMenageLines((p) => (p.length <= 1 ? [emptyFactureLine()] : p.filter((_, idx) => idx !== i)));
+  }
+  function addPickupLine() { setPickupLines((p) => [...p, emptyFactureLine()]); }
+  function removePickupLine(i: number) {
+    setPickupLines((p) => (p.length <= 1 ? [emptyFactureLine()] : p.filter((_, idx) => idx !== i)));
   }
 
   function addExtraPersonnelEntry() {
@@ -484,6 +542,29 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       });
     }
 
+    if (mode === 'facture') {
+      menageLines.forEach((line) => {
+        if (!line.label.trim() && !line.date && !(line.amount > 0)) return;
+        if (!line.label.trim() && !(line.amount > 0)) return;
+        items.push({
+          service_id: null,
+          description: formatFactureLineDescription('Ménage', line),
+          quantity: 1,
+          unit_price: Number(line.amount) || 0,
+        });
+      });
+      pickupLines.forEach((line) => {
+        if (!line.label.trim() && !line.date && !(line.amount > 0)) return;
+        if (!line.label.trim() && !(line.amount > 0)) return;
+        items.push({
+          service_id: null,
+          description: formatFactureLineDescription('Pick-up', line),
+          quantity: 1,
+          unit_price: Number(line.amount) || 0,
+        });
+      });
+    }
+
     displacements.forEach((d) => {
       if (d.description || d.amount > 0) {
         items.push({
@@ -546,6 +627,10 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
       workDays.forEach((d) => { t += d.hours * d.rate; });
       forfaits.forEach((f) => { t += (Number(f.quantity) || 0) * (Number(f.unit_price) || 0); });
     }
+    if (mode === 'facture') {
+      menageLines.forEach((l) => { t += Number(l.amount) || 0; });
+      pickupLines.forEach((l) => { t += Number(l.amount) || 0; });
+    }
     displacements.forEach((d) => { t += d.amount; });
     extraHours.forEach((h) => { t += h.hours * h.rate; });
     otherItems.forEach((o) => { t += o.quantity * o.unit_price; });
@@ -562,7 +647,11 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
 
     const items = buildItems();
     if (!items.length) {
-      setError('Adicione pelo menos um item (limpeza, diária, deslocamento ou outro).');
+      setError(
+        mode === 'facture'
+          ? 'Ajoutez au moins une ligne (Ménage ou Pick-up).'
+          : 'Adicione pelo menos um item (limpeza, diária, deslocamento ou outro).'
+      );
       return;
     }
 
@@ -658,6 +747,13 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${mode === 'client' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <Package className="w-4 h-4" /> Livre / Outros serviços
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('facture')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${mode === 'facture' ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              >
+                <FileText className="w-4 h-4" /> Facture
               </button>
             </div>
           </div>
@@ -1246,11 +1342,188 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         </div>
       )}
 
+      {/* ── Mode Facture : Ménage + Pick-up ── */}
+      {mode === 'facture' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-sky-200 shadow-sm overflow-hidden">
+            <SectionHeader
+              icon={<Sparkles className="w-4 h-4 text-sky-700" />}
+              title="1. Ménage"
+              color="bg-sky-50 border-b border-sky-100"
+              tooltip="Appartement (texte libre) · horaires · montant"
+            />
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-slate-500">
+                Ajoutez une ligne par intervention. Nom de l&apos;appartement en texte libre, heure de début / fin et montant.
+              </p>
+              {menageLines.map((line, i) => (
+                <div
+                  key={line.key}
+                  className="grid grid-cols-12 gap-2 items-end border border-sky-100 rounded-lg p-3 bg-sky-50/40"
+                >
+                  <div className="col-span-12 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Date</label>
+                    <input
+                      type="date"
+                      value={line.date}
+                      onChange={(e) => updateFactureLine(setMenageLines, i, 'date', e.target.value)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-12 sm:col-span-3">
+                    <label className="block text-xs text-slate-500 mb-0.5">Appartement</label>
+                    <input
+                      value={line.label}
+                      onChange={(e) => updateFactureLine(setMenageLines, i, 'label', e.target.value)}
+                      placeholder="Nom de l'appartement"
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-4 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Début</label>
+                    <input
+                      type="time"
+                      value={line.startTime}
+                      onChange={(e) => updateFactureLine(setMenageLines, i, 'startTime', e.target.value)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-4 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Fin</label>
+                    <input
+                      type="time"
+                      value={line.endTime}
+                      onChange={(e) => updateFactureLine(setMenageLines, i, 'endTime', e.target.value)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-3 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Montant (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={line.amount || ''}
+                      onChange={(e) =>
+                        updateFactureLine(setMenageLines, i, 'amount', parseFloat(e.target.value) || 0)
+                      }
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeMenageLine(i)}
+                      className="p-1.5 text-red-400 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addMenageLine}
+                className="text-sky-700 hover:underline text-sm flex items-center gap-1"
+              >
+                <Plus className="w-4 h-4" /> Ajouter une ligne
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-teal-200 shadow-sm overflow-hidden">
+            <SectionHeader
+              icon={<Truck className="w-4 h-4 text-teal-700" />}
+              title="2. Pick-up"
+              color="bg-teal-50 border-b border-teal-100"
+              tooltip="Libellé (texte libre) · horaires · montant"
+            />
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-slate-500">
+                Même structure : texte libre, heure de début / fin et montant. Une ligne par pick-up.
+              </p>
+              {pickupLines.map((line, i) => (
+                <div
+                  key={line.key}
+                  className="grid grid-cols-12 gap-2 items-end border border-teal-100 rounded-lg p-3 bg-teal-50/40"
+                >
+                  <div className="col-span-12 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Date</label>
+                    <input
+                      type="date"
+                      value={line.date}
+                      onChange={(e) => updateFactureLine(setPickupLines, i, 'date', e.target.value)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-12 sm:col-span-3">
+                    <label className="block text-xs text-slate-500 mb-0.5">Libellé</label>
+                    <input
+                      value={line.label}
+                      onChange={(e) => updateFactureLine(setPickupLines, i, 'label', e.target.value)}
+                      placeholder="Ex: Pick-up aéroport, adresse…"
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-4 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Début</label>
+                    <input
+                      type="time"
+                      value={line.startTime}
+                      onChange={(e) => updateFactureLine(setPickupLines, i, 'startTime', e.target.value)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-4 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Fin</label>
+                    <input
+                      type="time"
+                      value={line.endTime}
+                      onChange={(e) => updateFactureLine(setPickupLines, i, 'endTime', e.target.value)}
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-3 sm:col-span-2">
+                    <label className="block text-xs text-slate-500 mb-0.5">Montant (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={line.amount || ''}
+                      onChange={(e) =>
+                        updateFactureLine(setPickupLines, i, 'amount', parseFloat(e.target.value) || 0)
+                      }
+                      className={INPUT}
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removePickupLine(i)}
+                      className="p-1.5 text-red-400 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addPickupLine}
+                className="text-teal-700 hover:underline text-sm flex items-center gap-1"
+              >
+                <Plus className="w-4 h-4" /> Ajouter une ligne
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {mode === 'property' && billingClientId && (
         <CaveTasksSection caves={caveTasks} onChange={setCaveTasks} />
       )}
 
-      {billingClientId && (
+      {mode !== 'facture' && billingClientId && (
         <ExtraPersonnelSection
           properties={billingProperties}
           entries={extraPersonnel}
@@ -1267,7 +1540,9 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
         />
       )}
 
-      {/* ── Deslocamentos ── */}
+      {/* ── Deslocamentos / Horas extras / Outros (ocultos no mode Facture) ── */}
+      {mode !== 'facture' && (
+      <>
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <SectionHeader
           icon={<Car className="w-4 h-4 text-amber-700" />}
@@ -1419,6 +1694,8 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           </button>
         </div>
       </div>
+      </>
+      )}
 
       {/* ── Total ── */}
       <div className="bg-primary-50 border border-primary-200 rounded-xl px-6 py-4 space-y-2">
