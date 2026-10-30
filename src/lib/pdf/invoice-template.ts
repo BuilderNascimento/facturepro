@@ -1,6 +1,6 @@
 import { isVeryStayInvoiceContext } from '@/lib/cleaning-labels';
 import { extractPropertyNamesFromItems } from '@/lib/verystay-property-visuals';
-import { getPaymentConditionsHtml } from './payment-conditions';
+import { getObservationsHtml, getPaymentConditionsHtml } from './payment-conditions';
 import { getVeryStayInvoiceHtml } from './verystay-invoice-template';
 
 export interface InvoicePdfData {
@@ -124,8 +124,8 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
 
   const legalText = c.legal_text_default || 'TVA non applicable, art. 293B du CGI';
   const hasBank = c.iban || c.bic || c.bank_name;
-  const invoiceDescription = inv.description ? esc(inv.description) : '';
   const paymentConditions = getPaymentConditionsHtml();
+  const observationsBlock = inv.description ? getObservationsHtml(inv.description) : '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -249,13 +249,6 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
       </div>
     </div>
 
-    ${invoiceDescription ? `
-    <div class="desc-box">
-      <div class="desc-head">Description</div>
-      <div class="desc-body">${invoiceDescription}</div>
-    </div>
-    ` : ''}
-
     <!-- Tableau des prestations -->
     <table class="items-table">
       <thead>
@@ -277,7 +270,8 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
       <div class="total-final"><span>Total TTC</span><span>${fmtMoney(Number(inv.total_ttc))}</span></div>
     </div>
 
-    <!-- Barre légale + conditions -->
+    <!-- Observations + barre légale + conditions -->
+    ${observationsBlock}
     ${legalBar ? `<div class="footer-bar">${legalBar}</div>` : ''}
     ${legalText ? `<div class="legal-text"><p>${esc(legalText)}</p></div>` : ''}
     ${paymentConditions}

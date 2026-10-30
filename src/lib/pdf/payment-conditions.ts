@@ -1,5 +1,24 @@
 /** Bloc CONDITIONS DE RÈGLEMENT — aligné sur le modèle client */
 
+export function getObservationsHtml(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return '';
+  const esc = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  return `
+    <div class="observations" style="margin-top:18px">
+      <div style="font-size:12px;font-weight:700;color:#1e3a5f;letter-spacing:.06em;margin-bottom:8px;text-transform:uppercase">
+        Observations
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:12px 16px;font-size:12px;color:#334155;line-height:1.65;white-space:pre-wrap">${esc(trimmed)}</div>
+    </div>`;
+}
+
 export function getPaymentConditionsHtml(): string {
   return `
     <div class="payment-conditions" style="margin-top:20px">

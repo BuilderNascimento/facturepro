@@ -1,5 +1,5 @@
 import type { InvoicePdfData } from './invoice-template';
-import { getPaymentConditionsHtml } from './payment-conditions';
+import { getObservationsHtml, getPaymentConditionsHtml } from './payment-conditions';
 
 type CompanyData = InvoicePdfData['company'];
 type ClientData = InvoicePdfData['client'];
@@ -204,8 +204,8 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
 
   const legalText = c.legal_text_default || 'TVA non applicable, art. 293B du CGI';
   const hasBank = c.iban || c.bic || c.bank_name;
-  const invoiceDescription = inv.description ? esc(inv.description) : '';
   const paymentConditions = getPaymentConditionsHtml();
+  const observationsBlock = inv.description ? getObservationsHtml(inv.description) : '';
 
   const tableHead = `
     <thead>
@@ -366,8 +366,6 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
       </div>
     </div>
 
-    ${invoiceDescription ? `<div style="border:1px solid #e5e7eb;border-radius:6px;margin-bottom:18px;padding:10px 14px;font-size:12px;background:#faf5ff"><strong>Référence :</strong> ${invoiceDescription}</div>` : ''}
-
     <p style="font-size:11px;color:#6b7280;margin-bottom:12px">
       🟩🟪🟧🟨 = ménage classique · 🟢🟣🟠🟡 = ménage extra · Sparissimo (🟩🟧) · Gaite (🟪🟨)
     </p>
@@ -401,6 +399,7 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
         : ''
     }
 
+    ${observationsBlock}
     ${paymentConditions}
   </div>
 </body>

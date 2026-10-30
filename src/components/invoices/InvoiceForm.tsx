@@ -828,17 +828,19 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
           </div>
         </div>
 
-        <div className="mt-4">
-          <label className={LABEL}>Descrição</label>
-          <Tip text="Campo livre para qualquer informação que deve aparecer na fatura (ex.: tipo de serviço, notas, observações)." />
-          <textarea
-            value={invoiceDescription}
-            onChange={(e) => setInvoiceDescription(e.target.value)}
-            rows={4}
-            placeholder="Escreva aqui qualquer informação adicional…"
-            className={`${INPUT} mt-2`}
-          />
-        </div>
+        {mode !== 'facture' && (
+          <div className="mt-4">
+            <label className={LABEL}>Descrição</label>
+            <Tip text="Campo livre para qualquer informação que deve aparecer na fatura (ex.: tipo de serviço, notas, observações)." />
+            <textarea
+              value={invoiceDescription}
+              onChange={(e) => setInvoiceDescription(e.target.value)}
+              rows={4}
+              placeholder="Escreva aqui qualquer informação adicional…"
+              className={`${INPUT} mt-2`}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Blocos de imóveis (modo limpeza) ── */}
@@ -1514,6 +1516,27 @@ export function InvoiceForm({ invoice, clients = [], properties = [], nextNumber
               >
                 <Plus className="w-4 h-4" /> Ajouter une ligne
               </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <SectionHeader
+              icon={<FileText className="w-4 h-4 text-slate-600" />}
+              title="Observations"
+              color="bg-slate-50 border-b border-slate-200"
+              tooltip="Apparaît en bas de la facture PDF"
+            />
+            <div className="p-4">
+              <p className="text-xs text-slate-500 mb-2">
+                Notes libres affichées en bas de la facture (après le total, avant les conditions de règlement).
+              </p>
+              <textarea
+                value={invoiceDescription}
+                onChange={(e) => setInvoiceDescription(e.target.value)}
+                rows={4}
+                placeholder="Ex: Accès, consignes, remarques pour le client…"
+                className={INPUT}
+              />
             </div>
           </div>
         </div>
