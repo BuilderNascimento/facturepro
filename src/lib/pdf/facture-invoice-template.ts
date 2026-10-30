@@ -107,6 +107,15 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
   const cl = data.client;
   const inv = data.invoice;
 
+  const issueYear = (() => {
+    try {
+      const y = new Date(inv.issue_date).getFullYear();
+      return Number.isFinite(y) ? y : new Date().getFullYear();
+    } catch {
+      return new Date().getFullYear();
+    }
+  })();
+
   const byKind: Record<FactureKind, Row[]> = {
     Ménage: [],
     Accueil: [],
@@ -115,7 +124,7 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
   const otherRows: { description: string; amount: number }[] = [];
 
   for (const item of data.items) {
-    const parsed = parseFactureLine(item.description);
+    const parsed = parseFactureLine(item.description, issueYear);
     const amount = Number(item.quantity) * Number(item.unit_price);
     if (parsed) {
       byKind[parsed.kind].push({ parsed, amount });
@@ -146,6 +155,20 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
       </table>
     </div>`
       : '';
+
+  const hasBank = !!(c.iban || c.bic || c.bank_name);
+  const bankBlock = hasBank
+    ? `
+    <div style="margin-top:18px;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+      <div style="background:#1e4a7a;color:#fff;padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:.08em">INFORMATIONS BANCAIRES</div>
+      <div style="padding:12px 14px;font-size:12px;line-height:1.7">
+        ${c.bank_name ? `<div><span style="color:#6b7280">Banque</span> — <strong>${esc(c.bank_name)}</strong></div>` : ''}
+        ${c.iban ? `<div><span style="color:#6b7280">IBAN</span> — <strong>${esc(c.iban)}</strong></div>` : ''}
+        ${c.bic ? `<div><span style="color:#6b7280">BIC</span> — <strong>${esc(c.bic)}</strong></div>` : ''}
+        <div style="margin-top:4px;color:#6b7280;font-size:11px">Virement · Échéance ${fmtDate(inv.due_date)}</div>
+      </div>
+    </div>`
+    : '';
 
   const observations = inv.description ? getObservationsHtml(inv.description) : '';
   const paymentConditions = getPaymentConditionsHtml();
@@ -224,6 +247,7 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
       </div>
     </div>
 
+    ${bankBlock}
     ${observations}
     ${paymentConditions}
   </div>

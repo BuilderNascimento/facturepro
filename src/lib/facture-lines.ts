@@ -33,22 +33,109 @@ export type ParsedFactureLine = {
   local: string;
 };
 
-export function parseFactureLine(description: string): ParsedFactureLine | null {
+/** Mois FR (date-fns 'MMM' : "oct.", "janv.", "févr.", …) */
+const FR_MONTHS: Record<string, number> = {
+  jan: 1, janv: 1,
+  fev: 2, févr: 2, fevr: 2,
+  mar: 3, mars: 3,
+  avr: 4,
+  mai: 5,
+  juin: 6,
+  juil: 7, juill: 7,
+  aou: 8, aoû: 8, aout: 8, août: 8,
+  sep: 9, sept: 9,
+  oct: 10,
+  nov: 11,
+  dec: 12, déc: 12,
+};
+
+/** Convertit une date FR courte (03 oct.), FR longue (03/09/2026) ou ISO → yyyy-mm-dd */
+function toIsoDate(s: string, defaultYear: number): string {
+  const t = s.trim();
+  const fr = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) return `${fr[3]}-${fr[2].padStart(2, '0')}-${fr[1].padStart(2, '0')}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+
+  // "03 oct." / "3 oct" / "05 févr." (ancien formatFactureLineDescription)
+  const short = t.match(/^(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\.?$/u);
+  if (short) {
+    const day = parseInt(short[1], 10);
+    const monKey = short[2]
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\.$/, '');
+    // essayer clé exacte puis préfixe 3–4 lettres
+    const month =
+      FR_MONTHS[monKey] ||
+      FR_MONTHS[monKey.slice(0, 4)] ||
+      FR_MONTHS[monKey.slice(0, 3)];
+    if (month && day >= 1 && day <= 31) {
+      return `${defaultYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  return '';
+}
+
+function parseLegacyHours(s: string): { startTime: string; endTime: string } {
+  const t = s.trim();
+  // "10:00 – 14:00" / "10:00-14:00" / tirets unicode
+  const range = t.match(/(\d{1,2}:\d{2})\s*[–—−\-]\s*(\d{1,2}:\d{2})/);
+  if (range) {
+    return {
+      startTime: range[1].padStart(5, '0'),
+      endTime: range[2].padStart(5, '0'),
+    };
+  }
+  const one = t.match(/^(\d{1,2}:\d{2})$/);
+  if (one) return { startTime: one[1].padStart(5, '0'), endTime: '' };
+  return { startTime: '', endTime: '' };
+}
+
+function splitLegacyParts(rest: string): string[] {
+  // Séparateur de champs = tiret long " — " (U+2014).
+  // Ne pas couper sur " – " (U+2013) : c'est le séparateur d'heures "10:00 – 14:00".
+  return rest
+    .split(/\s*—\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function parseFactureLine(
+  description: string,
+  defaultYear: number = new Date().getFullYear()
+): ParsedFactureLine | null {
   const raw = description.trim();
   if (!raw.startsWith(`${PREFIX}::`)) {
-    // Compat anciennes lignes "Ménage — local — date — heures"
-    const legacy = raw.match(/^(Ménage|Accueil|Pick-up)\s*—\s*(.+)$/i);
+    // Compat anciennes lignes "Ménage — local — 03 oct. — 10:00 – 14:00"
+    const legacy = raw.match(/^(Ménage|Menage|Accueil|Pick-up|Pickup)\s*[—–−\-]\s*(.+)$/i);
     if (!legacy) return null;
     const kind = normalizeKind(legacy[1]);
     if (!kind) return null;
-    const rest = legacy[2].split(/\s*—\s*/).map((s) => s.trim());
-    return {
-      kind,
-      local: rest[0] || '',
-      date: '',
-      startTime: '',
-      endTime: '',
-    };
+    const rest = splitLegacyParts(legacy[2]);
+
+    let local = '';
+    let date = '';
+    let startTime = '';
+    let endTime = '';
+
+    for (const part of rest) {
+      const iso = toIsoDate(part, defaultYear);
+      if (iso && !date) {
+        date = iso;
+        continue;
+      }
+      const hours = parseLegacyHours(part);
+      if ((hours.startTime || hours.endTime) && !startTime) {
+        startTime = hours.startTime;
+        endTime = hours.endTime;
+        continue;
+      }
+      if (!local) local = part;
+      else local = `${local} — ${part}`;
+    }
+
+    return { kind, local, date, startTime, endTime };
   }
 
   const parts = raw.split('::');
