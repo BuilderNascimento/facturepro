@@ -4,6 +4,7 @@ import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 import { InvoiceActions } from '@/components/invoices/InvoiceActions';
 import { DuplicateButton } from '@/components/invoices/DuplicateButton';
+import { CreditNoteButton } from '@/components/invoices/CreditNoteButton';
 import { IS_DEMO } from '@/lib/demo/data';
 
 const statusLabels: Record<string, string> = {
@@ -40,7 +41,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Facture {invoice.invoice_number}</h1>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {(invoice as { document_type?: string }).document_type === 'credit_note' ? 'Avoir' : 'Facture'} {invoice.invoice_number}
+          </h1>
           <p className="text-slate-600 mt-1">
             {client?.company_name} · {format(new Date(invoice.issue_date), 'd MMMM yyyy', { locale: fr })}
           </p>
@@ -153,7 +156,14 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             🔒 Edição bloqueada
           </span>
         )}
-        <DuplicateButton invoiceId={id} />
+        {(invoice as { document_type?: string }).document_type !== 'credit_note' && (
+          <>
+            {invoice.status !== 'draft' && (
+              <CreditNoteButton invoiceId={id} invoiceNumber={invoice.invoice_number} />
+            )}
+            <DuplicateButton invoiceId={id} />
+          </>
+        )}
         <Link href="/invoices" className="px-4 py-2 text-slate-500 hover:text-slate-700 text-sm">
           ← Voltar à lista
         </Link>

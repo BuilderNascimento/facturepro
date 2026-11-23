@@ -60,7 +60,9 @@ export async function POST(request: Request) {
       client_id: parsed.data.client_id,
       issue_date: parsed.data.issue_date,
       due_date: parsed.data.due_date,
-      status: parsed.data.status,
+      // Cria sempre como rascunho: as linhas só podem ser inseridas enquanto é rascunho.
+      // O estado final é aplicado depois de as linhas estarem gravadas.
+      status: 'draft',
       description,
       tva_rate: tvaRate,
       total_ht: totalHt,
@@ -85,6 +87,14 @@ export async function POST(request: Request) {
   if (itemsError) {
     await supabase.from('invoices').delete().eq('id', invoice.id);
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
+  }
+
+  if (parsed.data.status !== 'draft') {
+    const { error: statusError } = await supabase
+      .from('invoices')
+      .update({ status: parsed.data.status })
+      .eq('id', invoice.id);
+    if (statusError) return NextResponse.json({ error: statusError.message }, { status: 500 });
   }
 
   return NextResponse.json({ id: invoice.id });

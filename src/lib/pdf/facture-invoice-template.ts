@@ -200,7 +200,7 @@ export function getFactureInvoiceHtml(data: InvoicePdfData): string {
 
   <div class="page">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid #1e4a7a">
-      <div style="font-size:28px;font-weight:800;color:#1e4a7a;letter-spacing:.06em">FACTURE</div>
+      <div style="font-size:28px;font-weight:800;color:#1e4a7a;letter-spacing:.06em">${inv.document_type === 'credit_note' ? 'AVOIR' : 'FACTURE'}</div>
       <div style="text-align:right;font-size:13px">
         <div><span style="color:#6b7280">N°</span> <strong>${esc(inv.invoice_number)}</strong></div>
         <div style="margin-top:4px"><span style="color:#6b7280">Date</span> <strong>${fmtDate(inv.issue_date)}</strong></div>

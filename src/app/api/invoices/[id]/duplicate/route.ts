@@ -22,6 +22,10 @@ export async function POST(
     return NextResponse.json({ error: 'Fatura não encontrada' }, { status: 404 });
   }
 
+  if ((original as { document_type?: string }).document_type === 'credit_note') {
+    return NextResponse.json({ error: 'Uma nota de crédito não pode ser duplicada' }, { status: 400 });
+  }
+
   // Get next invoice number
   const { data: numData, error: numError } = await supabase.rpc('get_next_invoice_number');
   if (numError || !numData) {

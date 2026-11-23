@@ -103,6 +103,7 @@ export async function GET(
           due_date: invoice.due_date,
           status: invoice.status,
             description: (invoice as { description?: string | null }).description ?? null,
+          document_type: (invoice as { document_type?: 'invoice' | 'credit_note' }).document_type ?? 'invoice',
           total_ht: Number(invoice.total_ht),
           total_tva: Number(invoice.total_tva),
           total_ttc: Number(invoice.total_ttc),

@@ -347,7 +347,7 @@ export function getVeryStayInvoiceHtml(data: InvoicePdfData): string {
         ${c.email ? `<div style="font-size:12px;color:#4b5563">${esc(c.email)}</div>` : ''}
       </div>
       <div style="text-align:right">
-        <div style="font-size:26px;font-weight:800;color:#7c3aed;letter-spacing:.04em">FACTURE</div>
+        <div style="font-size:26px;font-weight:800;color:#7c3aed;letter-spacing:.04em">${inv.document_type === 'credit_note' ? 'AVOIR' : 'FACTURE'}</div>
         <table style="margin-left:auto;margin-top:8px;font-size:12px;border-collapse:collapse">
           <tr><td style="color:#6b7280;padding:2px 8px 2px 0;text-align:right">Référence :</td><td style="font-weight:600">${esc(inv.invoice_number)}</td></tr>
           <tr><td style="color:#6b7280;padding:2px 8px 2px 0;text-align:right">Date :</td><td style="font-weight:600">${fmtDate(inv.issue_date)}</td></tr>

@@ -80,13 +80,27 @@ export async function PUT(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
+  const { data: current } = await supabase
+    .from('invoices')
+    .select('status')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle();
+  if (!current) return NextResponse.json({ error: 'Facture introuvable' }, { status: 404 });
+  if (current.status !== 'draft') {
+    return NextResponse.json(
+      { error: 'Fatura emitida não pode ser alterada. Crie uma nota de crédito.' },
+      { status: 409 },
+    );
+  }
+
+  // Linhas primeiro (a fatura ainda é rascunho); o estado final é aplicado no fim.
   const { error: invError } = await supabase
     .from('invoices')
     .update({
       client_id: parsed.data.client_id,
       issue_date: parsed.data.issue_date,
       due_date: parsed.data.due_date,
-      status: parsed.data.status,
       description,
       tva_rate: tvaRate,
       total_ht: totalHt,
@@ -109,6 +123,14 @@ export async function PUT(
   }));
   const { error: itemsError } = await supabase.from('invoice_items').insert(items);
   if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 });
+
+  if (parsed.data.status !== 'draft') {
+    const { error: statusError } = await supabase
+      .from('invoices')
+      .update({ status: parsed.data.status })
+      .eq('id', id);
+    if (statusError) return NextResponse.json({ error: statusError.message }, { status: 500 });
+  }
   return NextResponse.json({ ok: true, id });
 }
 
@@ -128,6 +150,20 @@ export async function DELETE(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+
+  const { data: current } = await supabase
+    .from('invoices')
+    .select('status')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle();
+  if (!current) return NextResponse.json({ error: 'Facture introuvable' }, { status: 404 });
+  if (current.status !== 'draft') {
+    return NextResponse.json(
+      { error: 'Fatura emitida não pode ser apagada. Crie uma nota de crédito.' },
+      { status: 409 },
+    );
+  }
 
   const { error } = await supabase
     .from('invoices')

@@ -25,6 +25,9 @@ export async function PATCH(
     .eq('id', id)
     .is('deleted_at', null);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // P0001 = regra de imutabilidade da base de dados
+    return NextResponse.json({ error: error.message }, { status: error.code === 'P0001' ? 409 : 500 });
+  }
   return NextResponse.json({ ok: true });
 }

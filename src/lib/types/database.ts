@@ -75,6 +75,9 @@ export interface Invoice {
   status: InvoiceStatus;
   description: string | null;
   tva_rate: number;
+  document_type?: 'invoice' | 'credit_note';
+  credited_invoice_id?: string | null;
+  credit_reason?: string | null;
   total_ht: number;
   total_tva: number;
   total_ttc: number;

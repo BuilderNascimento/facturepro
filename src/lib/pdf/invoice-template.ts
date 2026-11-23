@@ -39,6 +39,7 @@ export interface InvoicePdfData {
     due_date: string;
     status: string;
     description?: string | null;
+    document_type?: 'invoice' | 'credit_note';
     total_ht: number;
     total_tva: number;
     total_ttc: number;
@@ -218,7 +219,7 @@ export function getInvoiceHtml(data: InvoicePdfData): string {
         ${c.email ? `<div class="line">${esc(c.email)}</div>` : ''}
       </div>
       <div class="hdr-badge">
-        <div class="title">FACTURE</div>
+        <div class="title">${inv.document_type === 'credit_note' ? 'AVOIR' : 'FACTURE'}</div>
         <table class="ref-table">
           <tr><td>Référence :</td><td>${esc(inv.invoice_number)}</td></tr>
           <tr><td>Version :</td><td>1.0</td></tr>
