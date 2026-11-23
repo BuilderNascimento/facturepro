@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { companySettingsSchema, type CompanySettingsInput } from '@/lib/validations/schemas';
 import type { CompanySettings } from '@/lib/types/database';
+import { checkSellerFiscal } from '@/lib/fiscal/rules';
 
 interface SettingsFormProps {
   settings: CompanySettings | null;
@@ -18,6 +19,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const isIdentityLocked = !!(settings?.siret);
+  const fiscalIssues = settings ? checkSellerFiscal(settings).filter((i) => i.severity === 'error') : [];
 
   const defaultValues: CompanySettingsInput = {
     company_name: settings?.company_name ?? '',
@@ -66,6 +68,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       late_penalty_rate: formData.get('late_penalty_rate'),
       legal_text_default: formData.get('legal_text_default') || undefined,
       indemnity_text_default: formData.get('indemnity_text_default') || undefined,
+      country_code: (formData.get('country_code') as string) || undefined,
+      vat_regime: (formData.get('vat_regime') as string) || undefined,
+      vat_on_debits: formData.get('vat_on_debits') === 'on',
     };
     // Validar SIRET: exatamente 14 dígitos (ignorando espaços)
     const siretVal = (raw.siret as string | undefined ?? '').replace(/\s/g, '');
@@ -151,6 +156,47 @@ export function SettingsForm({ settings }: SettingsFormProps) {
               <input name="vat_number" defaultValue={defaultValues.vat_number} className={F} placeholder="FR 00 XXX XXX XXX" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Configuração fiscal (facturation électronique) */}
+      <div>
+        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Configuração fiscal</h2>
+        {fiscalIssues.length > 0 && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            <p className="font-medium mb-1">Para a faturação eletrónica obrigatória, falta completar:</p>
+            <ul className="list-disc pl-5 space-y-0.5">
+              {fiscalIssues.map((i) => (
+                <li key={i.field + i.message}>{i.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={L}>SIREN <span className="text-slate-400 font-normal text-xs">(calculado a partir do SIRET)</span></label>
+            <input value={settings?.siren ?? ''} readOnly disabled className={`${F} bg-slate-50 text-slate-500 cursor-not-allowed`} placeholder="—" />
+          </div>
+          <div>
+            <label className={L}>País</label>
+            <input name="country_code" defaultValue={settings?.country_code ?? 'FR'} maxLength={2} className={F} placeholder="FR" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={L}>Regime de TVA</label>
+            <select name="vat_regime" defaultValue={settings?.vat_regime ?? ''} className={F}>
+              <option value="">— Selecione —</option>
+              <option value="franchise">Franchise en base de TVA (art. 293 B do CGI)</option>
+              <option value="real_simplified">Régime réel simplifié</option>
+              <option value="real_normal">Régime réel normal</option>
+            </select>
+            <p className="text-xs text-slate-400 mt-1">
+              Estar em franchise de TVA não dispensa da faturação eletrónica. O N° TVA só é obrigatório fora da franchise.
+            </p>
+          </div>
+          <label className="sm:col-span-2 flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" name="vat_on_debits" defaultChecked={settings?.vat_on_debits ?? false} />
+            Opção pela TVA sobre os débitos
+          </label>
         </div>
       </div>
 

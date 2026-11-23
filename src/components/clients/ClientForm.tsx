@@ -30,6 +30,10 @@ export function ClientForm({ client }: ClientFormProps) {
       siret: formData.get('siret') || undefined,
       vat_number: formData.get('vat_number') || undefined,
       notes: formData.get('notes') || undefined,
+      client_type: formData.get('client_type') || undefined,
+      country_code: formData.get('country_code') || undefined,
+      postal_code: formData.get('postal_code') || undefined,
+      city: formData.get('city') || undefined,
     };
     const parsed = clientSchema.safeParse(raw);
     if (!parsed.success) {
@@ -82,6 +86,25 @@ export function ClientForm({ client }: ClientFormProps) {
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
           <textarea name="address" rows={2} defaultValue={client?.address ?? ''} className={field} placeholder="Rua, cidade, código postal" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Código postal</label>
+          <input name="postal_code" defaultValue={client?.postal_code ?? ''} className={field} placeholder="75001" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Cidade</label>
+          <input name="city" defaultValue={client?.city ?? ''} className={field} placeholder="Paris" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">País</label>
+          <input name="country_code" defaultValue={client?.country_code ?? 'FR'} maxLength={2} className={field} placeholder="FR" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de cliente</label>
+          <select name="client_type" defaultValue={client?.client_type ?? 'business'} className={field}>
+            <option value="business">Empresa / profissional (B2B)</option>
+            <option value="individual">Particular (B2C)</option>
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">N° TVA</label>

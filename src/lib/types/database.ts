@@ -25,6 +25,10 @@ export interface CompanySettings {
   late_penalty_rate: number;
   legal_text_default: string | null;
   indemnity_text_default: string | null;
+  siren?: string | null;
+  country_code?: string;
+  vat_regime?: 'franchise' | 'real_simplified' | 'real_normal' | null;
+  vat_on_debits?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +43,11 @@ export interface Client {
   siret: string | null;
   vat_number: string | null;
   notes: string | null;
+  client_type?: 'business' | 'individual';
+  country_code?: string;
+  postal_code?: string | null;
+  city?: string | null;
+  siren?: string | null;
   created_at: string;
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clientSchema } from '@/lib/validations/schemas';
 import { IS_DEMO } from '@/lib/demo/data';
+import { clientFiscalColumns } from '@/lib/fiscal/client-columns';
 
 export async function PUT(
   request: Request,
@@ -43,6 +44,7 @@ export async function PUT(
     siret: parsed.data.siret ?? null,
     vat_number: parsed.data.vat_number ?? null,
     notes: parsed.data.notes ?? null,
+    ...clientFiscalColumns(parsed.data),
   }).eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

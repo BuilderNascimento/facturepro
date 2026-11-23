@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { companySettingsSchema } from '@/lib/validations/schemas';
+import { isValidFrenchVat, isValidSiret, sirenFromSiret } from '@/lib/fiscal/identifiers';
 
 export async function PUT(request: Request) {
   const supabase = await createClient();
@@ -19,12 +20,24 @@ export async function PUT(request: Request) {
     .limit(1)
     .maybeSingle();
 
+  // Identidade fiscal: SIRET validado (Luhn) quando é novo; SIREN derivado do SIRET.
+  const existingSiret = (existing as { siret?: string | null } | null)?.siret ?? null;
+  const isLockedIdentity = !!existingSiret;
+  const effectiveSiret = isLockedIdentity ? existingSiret : parsed.data.siret;
+  if (!isLockedIdentity && parsed.data.siret && !isValidSiret(parsed.data.siret)) {
+    return NextResponse.json({ error: 'SIRET inválido (verifique os 14 dígitos).' }, { status: 400 });
+  }
+  const siren = sirenFromSiret(effectiveSiret);
+  if (parsed.data.vat_number && siren && !isValidFrenchVat(parsed.data.vat_number, siren)) {
+    return NextResponse.json({ error: 'N° TVA inválido ou não corresponde ao SIREN do SIRET.' }, { status: 400 });
+  }
+
   if (existing) {
     // Fields locked once SIRET is set — only editable via support
-    const LOCKED_FIELDS = ['company_name', 'siret', 'legal_status', 'ape_naf'];
-    const isLocked = !!(existing as { siret?: string | null }).siret;
+    const LOCKED_FIELDS = ['company_name', 'siret', 'legal_status', 'ape_naf', 'siren'];
+    const isLocked = isLockedIdentity;
 
-    const allData = parsed.data as Record<string, unknown>;
+    const allData = { ...(parsed.data as Record<string, unknown>), siren };
     const updateData = isLocked
       ? Object.fromEntries(Object.entries(allData).filter(([k]) => !LOCKED_FIELDS.includes(k)))
       : allData;
@@ -37,7 +50,7 @@ export async function PUT(request: Request) {
   } else {
     const { error } = await supabase
       .from('company_settings')
-      .insert({ ...(parsed.data as Record<string, unknown>), user_id: user.id });
+      .insert({ ...(parsed.data as Record<string, unknown>), siren, user_id: user.id });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

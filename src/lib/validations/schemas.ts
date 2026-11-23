@@ -21,11 +21,19 @@ export const companySettingsSchema = z.object({
   late_penalty_rate: z.coerce.number().min(0).max(100),
   legal_text_default: z.string().optional(),
   indemnity_text_default: z.string().optional(),
+  // Configuração fiscal (siren é derivado do SIRET no servidor)
+  country_code: z.string().regex(/^[A-Za-z]{2}$/, 'País inválido (código ISO de 2 letras)').transform((v) => v.toUpperCase()).optional(),
+  vat_regime: z.enum(['franchise', 'real_simplified', 'real_normal']).optional(),
+  vat_on_debits: z.boolean().optional(),
 });
 
 export const clientSchema = z.object({
   company_name: z.string().min(1, 'Nom obligatoire'),
   contact_name: z.string().optional(),
+  client_type: z.enum(['business', 'individual']).optional(),
+  country_code: z.string().regex(/^[A-Za-z]{2}$/, 'País inválido (código ISO de 2 letras)').transform((v) => v.toUpperCase()).optional(),
+  postal_code: z.string().optional(),
+  city: z.string().optional(),
   address: z.string().optional(),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
   phone: z.string().optional(),

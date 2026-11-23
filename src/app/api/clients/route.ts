@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clientSchema } from '@/lib/validations/schemas';
 import { IS_DEMO } from '@/lib/demo/data';
+import { clientFiscalColumns } from '@/lib/fiscal/client-columns';
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from('clients')
-      .insert({ ...payload, user_id: user.id })
+      .insert({ ...payload, ...clientFiscalColumns(parsed.data), user_id: user.id })
       .select('id')
       .single();
 
